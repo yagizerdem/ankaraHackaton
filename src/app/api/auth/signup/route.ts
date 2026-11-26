@@ -1,6 +1,6 @@
 import dbConnect from "@/lib/db";
 import { User } from "@/models/user";
-import { createSignUpSchema } from "@/domain/auth";
+import { createSignUpSchema, type SignUpResponse } from "@/domain/auth";
 import { withErrorHandler } from "@/error/with-error-handler";
 import { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
@@ -40,13 +40,13 @@ export const POST = withErrorHandler(async (request: Request) => {
   });
 
   return Response.json(
-    ApiResponse.created(
+    ApiResponse.created<SignUpResponse>(
       {
-        id: user._id,
+        id: user._id.toString(),
         username: user.username,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        firstName: user.firstName ?? undefined,
+        lastName: user.lastName ?? undefined,
         createdAt: user.createdAt,
       },
       "User created",

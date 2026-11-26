@@ -39,3 +39,32 @@ export async function createSession(
 
   return session;
 }
+
+/**
+ * Resolves the session cookie to its live Session row, or null when the
+ * cookie is missing, unknown or expired. Expects an open DB connection.
+ */
+export async function getSession() {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!token) return null;
+
+  // The TTL sweep can lag by about a minute, so check expiresAt here too.
+  return Session.findOne({
+    tokenHash: hashSessionToken(token),
+    expiresAt: { $gt: new Date() },
+  });
+}
+
+/**
+ * Deletes the Session row behind the cookie and clears the cookie. Safe to call
+ * when there is no session. Expects an open DB connection.
+ */
+export async function deleteSession() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE)?.value;
+
+  if (token) {
+    await Session.deleteOne({ tokenHash: hashSessionToken(token) });
+  }
+  cookieStore.delete(SESSION_COOKIE);
+}

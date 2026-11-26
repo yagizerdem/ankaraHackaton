@@ -66,6 +66,7 @@ export const POST = withErrorHandler(async (request: Request) => {
           email: user.email,
           firstName: user.firstName ?? "",
           lastName: user.lastName ?? "",
+          createdAt: user.createdAt,
         },
         expiresAt: session.expiresAt,
       },

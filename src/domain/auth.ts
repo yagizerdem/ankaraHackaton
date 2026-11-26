@@ -22,6 +22,15 @@ export function createSignUpSchema(data: unknown) {
 export type SignInInput = z.infer<ReturnType<typeof createSignInSchema>>;
 export type SignUpInput = z.infer<ReturnType<typeof createSignUpSchema>>;
 
+export interface SignUpResponse {
+  id: string;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  createdAt: Date;
+}
+
 export interface SignInResponse {
   user: {
     id: string;
@@ -29,6 +38,19 @@ export interface SignInResponse {
     email: string;
     firstName?: string;
     lastName?: string;
+    createdAt: Date;
+  };
+  expiresAt: Date;
+}
+
+export interface MeResponse {
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+    createdAt: Date;
   };
   expiresAt: Date;
 }
