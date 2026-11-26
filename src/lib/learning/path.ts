@@ -152,8 +152,9 @@ export function buildLearningPath({
     steps.push({ topicId: id, label: topic.label, status, mastery, ...step });
   }
 
-  // Days from today up to the day before the exam, at least one.
-  const start = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  // Days from today up to the day before the exam, at least one. Today is the
+  // local calendar day; the exam date is stored at noon UTC of its day.
+  const start = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
   const end = Date.UTC(examDate.getUTCFullYear(), examDate.getUTCMonth(), examDate.getUTCDate());
   const daysLeft = Math.max(1, Math.round((end - start) / DAY_MS));
 

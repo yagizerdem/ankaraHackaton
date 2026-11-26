@@ -5,12 +5,21 @@ const objectId = (name: string) =>
 
 /** The goal form can look this far ahead. */
 export const MAX_GOAL_DAYS = 180;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * yyyy-mm-dd of the local calendar day. Goals are calendar days, so "today"
+ * must not jump to yesterday or tomorrow around midnight as UTC would.
+ */
+export function calendarDate(date: Date, addDays = 0) {
+  const day = new Date(date.getTime() + addDays * DAY_MS);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
+}
 
 export function createGoalSchema(today = new Date()) {
-  const todayIso = today.toISOString().slice(0, 10);
-  const max = new Date(today.getTime() + MAX_GOAL_DAYS * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  const todayIso = calendarDate(today);
+  const max = calendarDate(today, MAX_GOAL_DAYS);
 
   return z.object({
     graphId: objectId("graphId"),
