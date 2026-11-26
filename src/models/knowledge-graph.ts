@@ -20,24 +20,31 @@ export interface TopicEdge {
   target: string;
 }
 
-const knowledgeGraphSchema = new mongoose.Schema({
-  documentId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  nodes: [{ type: mongoose.Schema.Types.ObjectId, ref: "TopicNode" }],
-  edges: [{ type: mongoose.Schema.Types.ObjectId, ref: "TopicEdge" }],
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-});
+const knowledgeGraphSchema = new mongoose.Schema(
+  {
+    documentId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    nodes: [{ type: mongoose.Schema.Types.ObjectId, ref: "TopicNode" }],
+    edges: [{ type: mongoose.Schema.Types.ObjectId, ref: "TopicEdge" }],
+  },
+  { timestamps: true },
+);
 
-const topicNodeSchema = new mongoose.Schema({
-  label: { type: String, required: true },
-  description: { type: String, required: true },
-  sourcePages: [{ type: Number, required: true }],
-});
+const topicNodeSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true },
+    description: { type: String, required: true },
+    sourcePages: [{ type: Number, required: true }],
+  },
+  { timestamps: true },
+);
 
-const topicEdgeSchema = new mongoose.Schema({
-  source: { type: String, required: true },
-  target: { type: String, required: true },
-});
+const topicEdgeSchema = new mongoose.Schema(
+  {
+    source: { type: String, required: true },
+    target: { type: String, required: true },
+  },
+  { timestamps: true },
+);
 
 // Dev hot-reload / serverless re-evaluation re-runs this module while
 // mongoose.models persists, and mongoose.model() throws OverwriteModelError
