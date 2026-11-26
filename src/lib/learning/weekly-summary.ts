@@ -32,6 +32,8 @@ Rules:
 - Sentence 2: the most useful thing to fix (a weak topic, the top mistake or
   overconfidence), named specifically.
 - Sentence 3: one concrete next step, tied to the goal if there is one.
+- Only connect facts the data connects. confidentMistakes is a total across
+  all topics; do not attribute it to topMistake or to one topic.
 - If answers is 0, say they haven't practised this week and suggest a short
   exam to start.
 - Plain text, no Markdown, no emoji, no greeting line.`,
