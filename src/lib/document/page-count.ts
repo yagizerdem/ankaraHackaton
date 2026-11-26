@@ -2,7 +2,7 @@ import JSZip from "jszip";
 import { PDFDocument } from "pdf-lib";
 
 export async function getPageCount(
-  buffer: Buffer,
+  buffer: Uint8Array,
   extension: string,
 ): Promise<number | null> {
   switch (extension) {
