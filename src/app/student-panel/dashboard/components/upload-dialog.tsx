@@ -85,6 +85,7 @@ export function UploadDialog() {
   const [pageCount, setPageCount] = useState<number | null | undefined>();
   const [pageError, setPageError] = useState<string | null>(null);
   const latestFile = useRef<File | null>(null);
+  const [chunkCount, setChunkCount] = useState<number | null>(null);
 
   async function chooseFile(next: File | undefined) {
     if (!next) return;
@@ -92,6 +93,7 @@ export function UploadDialog() {
     setFile(next);
     setPageCount(undefined);
     setPageError(null);
+    setChunkCount(null);
 
     try {
       const { getPageCount } = await import("@/lib/document/page-count");
@@ -113,6 +115,7 @@ export function UploadDialog() {
     setFile(null);
     setPageCount(undefined);
     setPageError(null);
+    setChunkCount(null);
   }
 
   const tooManyPages = pageCount != null && pageCount > MAX_PAGES;
@@ -135,9 +138,8 @@ export function UploadDialog() {
       return;
     }
     toast.success("Upload successful");
-
     setCurrentStep("chunking");
-    // generate embeddings for the uploaded document
+    // 2. generate embedddings of the uploaded document
 
     const embeddingResponse = await generateEmbeddings(uploadId);
     if (!embeddingResponse.isSuccess) {
@@ -145,7 +147,10 @@ export function UploadDialog() {
       return;
     }
 
-    console.log(embeddingResponse);
+    setChunkCount(embeddingResponse.data?.chunkCount ?? null);
+
+    toast.success("Embeddings generated successfully");
+    setCurrentStep("dag");
   }
 
   return (
@@ -358,6 +363,18 @@ export function UploadDialog() {
                   <p className="text-body-sm text-on-surface-variant">
                     {stage.description}
                   </p>
+                  {chunkCount != null &&
+                    (stage.step === "chunking" ||
+                      stage.step === "embedding") && (
+                      <p
+                        aria-live="polite"
+                        className="mt-0.5 text-mono-data text-success tabular-nums"
+                      >
+                        {stage.step === "chunking"
+                          ? `${chunkCount} ${chunkCount === 1 ? "chunk" : "chunks"} created`
+                          : `${chunkCount} ${chunkCount === 1 ? "vector" : "vectors"} generated`}
+                      </p>
+                    )}
                 </div>
 
                 <span
