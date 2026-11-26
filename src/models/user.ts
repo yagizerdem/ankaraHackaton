@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    // scrypt hash from @/lib/password; excluded from queries unless selected.
+    // bcrypt hash from @/lib/password; excluded from queries unless selected.
     passwordHash: { type: String, required: true, select: false },
   },
   { timestamps: true },
