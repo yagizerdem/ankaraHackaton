@@ -4,7 +4,7 @@ import { createSignUpSchema, type SignUpResponse } from "@/domain/auth";
 import { withErrorHandler } from "@/error/with-error-handler";
 import { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
-import { hashPassword } from "@/lib/password";
+import { hashPassword } from "@/lib/auth";
 import { zodErrorToFromErrors } from "@/lib/utils";
 
 /** JSON body matching createSignUpSchema. */

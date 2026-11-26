@@ -2,7 +2,7 @@ import dbConnect from "@/lib/db";
 import { withErrorHandler } from "@/error/with-error-handler";
 import { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
-import { getSession } from "@/lib/session";
+import { getSession } from "@/lib/auth";
 import { User } from "@/models/user";
 import type { MeResponse } from "@/domain/auth";
 

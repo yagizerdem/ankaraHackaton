@@ -2,6 +2,8 @@ import { createHash, randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import type mongoose from "mongoose";
 import { Session } from "@/models/session";
+import bcrypt from "bcrypt";
+import { User } from "@/models/user";
 
 export const SESSION_COOKIE = "session";
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -67,4 +69,36 @@ export async function deleteSession() {
     await Session.deleteOne({ tokenHash: hashSessionToken(token) });
   }
   cookieStore.delete(SESSION_COOKIE);
+}
+
+// Cost factor: each +1 doubles hashing time. 12 is ~250ms on typical servers.
+const SALT_ROUNDS = 12;
+
+/** Returns a bcrypt hash (salt embedded) for storing in User.passwordHash. */
+export async function hashPassword(password: string) {
+  return bcrypt.hash(password, SALT_ROUNDS);
+}
+
+export async function verifyPassword(password: string, stored: string) {
+  return bcrypt.compare(password, stored);
+}
+
+export async function verifySessionToken(token: string) {
+  const session = await Session.findOne({
+    tokenHash: hashSessionToken(token),
+    expiresAt: { $gt: new Date() },
+  });
+  return session || null;
+}
+
+export async function verifySessionAndGetUser(
+  token: string | null | undefined,
+) {
+  if (!token) return null;
+
+  const session = await verifySessionToken(token);
+  if (!session) return null;
+
+  const user = await User.findById(session.userId);
+  return user || null;
 }

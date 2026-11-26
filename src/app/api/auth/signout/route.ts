@@ -2,7 +2,7 @@ import dbConnect from "@/lib/db";
 import { withErrorHandler } from "@/error/with-error-handler";
 import { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
-import { deleteSession } from "@/lib/session";
+import { deleteSession } from "@/lib/auth";
 
 /**
  * Ends the current session. Always 200, so signing out twice or without a
