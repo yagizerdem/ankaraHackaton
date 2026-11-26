@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   CalendarIcon,
   ChevronDownIcon,
+  LayoutDashboardIcon,
   LogOutIcon,
   MailIcon,
   NetworkIcon,
@@ -45,13 +46,18 @@ function AppHeader() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-4 px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <NetworkIcon className="size-4" />
-          </span>
-          <span className="hidden sm:inline">{APP_NAME}</span>
-        </Link>
-
+        <div className="flex flex-row items-center gap-10">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <NetworkIcon className="size-4" />
+            </span>
+            <span className="hidden sm:inline">{APP_NAME}</span>
+          </Link>
+          <Link href="/" className="flex items-center gap-2 ">
+            <LayoutDashboardIcon className="size-4" />
+            <span className="hidden sm:inline">Student Panel</span>
+          </Link>
+        </div>
         <nav className="flex items-center gap-2">
           <ThemeSwitch />
           <AuthActions />
@@ -118,6 +124,7 @@ function AuthActions() {
 
 function ProfileMenu({ user }: { user: AuthUser }) {
   const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ");
+  const router = useRouter();
 
   return (
     <DropdownMenu>
@@ -154,6 +161,17 @@ function ProfileMenu({ user }: { user: AuthUser }) {
             <CalendarIcon className="size-4 shrink-0" />
             <dt className="sr-only">Member since</dt>
             <dd>Member since {format(new Date(user.createdAt), "PP")}</dd>
+          </div>
+        </dl>
+
+        <DropdownMenuSeparator />
+        <dl
+          onMouseUp={() => router.push("/student-panel")}
+          className="flex flex-col gap-2 px-2 py-2 text-sm cursor-pointer hover:bg-secondary rounded-md  transition-all duration-300"
+        >
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <LayoutDashboardIcon className="size-4 shrink-0" />
+            <div className="truncate text-foreground">Student Panel</div>
           </div>
         </dl>
       </DropdownMenuContent>
