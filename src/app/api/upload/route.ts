@@ -1,83 +1,73 @@
 import path from "node:path";
-import dbConnect from "@/lib/db";
-import { Document } from "@/models/document";
+import { cookies } from "next/headers";
+
+import { AppError } from "@/error/app-error";
 import { withErrorHandler } from "@/error/with-error-handler";
 import { ApiResponse } from "@/lib/api-response";
-import HttpStatusCode from "@/lib/http-status-code";
-import { verifySessionAndGetUser, SESSION_COOKIE } from "@/lib/auth";
-import { cookies } from "next/headers";
+import { SESSION_COOKIE, verifySessionAndGetUser } from "@/lib/auth";
+import dbConnect from "@/lib/db";
 import { getPageCount } from "@/lib/document/page-count";
+import HttpStatusCode from "@/lib/http-status-code";
+import { Document } from "@/models/document";
 
 // MongoDB caps a single document at 16MB; leave headroom for the other fields.
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit for uploaded files
 const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx", "txt"]; // Allowed file extensions
 const MAX_PAGES = 50;
 
+/** A 400 with the message under the `file` field, for the upload form. */
+function fileError(message: string) {
+  return new AppError(
+    "Validation failed",
+    HttpStatusCode.BAD_REQUEST,
+    true,
+    { file: message },
+  );
+}
+
 /** multipart/form-data with the file under the `file` field. */
 export const POST = withErrorHandler(async (request: Request) => {
   const user = await verifySessionAndGetUser(
     (await cookies()).get(SESSION_COOKIE)?.value,
   );
-
   if (!user) {
-    return Response.json(ApiResponse.unauthorized("Sign in required"), {
-      status: HttpStatusCode.UNAUTHORIZED,
-    });
+    throw new AppError("Sign in required", HttpStatusCode.UNAUTHORIZED);
   }
 
   let formData: FormData;
   try {
     formData = await request.formData();
   } catch {
-    return Response.json(
-      ApiResponse.badRequest("Expected multipart/form-data body"),
-      { status: HttpStatusCode.BAD_REQUEST },
+    throw new AppError(
+      "Expected multipart/form-data body",
+      HttpStatusCode.BAD_REQUEST,
     );
   }
 
   const file = formData.get("file");
-  if (!(file instanceof File)) {
-    return Response.json(
-      ApiResponse.badRequest("Validation failed", {
-        file: "`file` field is required",
-      }),
-      { status: HttpStatusCode.BAD_REQUEST },
-    );
-  }
-  if (file.size === 0) {
-    return Response.json(
-      ApiResponse.badRequest("Validation failed", { file: "File is empty" }),
-      { status: HttpStatusCode.BAD_REQUEST },
-    );
-  }
+  if (!(file instanceof File)) throw fileError("`file` field is required");
+  if (file.size === 0) throw fileError("File is empty");
 
   if (file.size > MAX_FILE_SIZE) {
-    return Response.json(
-      ApiResponse.payloadTooLarge(
-        `File exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`,
-      ),
-      { status: HttpStatusCode.PAYLOAD_TOO_LARGE },
+    throw new AppError(
+      `File exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`,
+      HttpStatusCode.PAYLOAD_TOO_LARGE,
     );
   }
 
   const extension = path.extname(file.name).replace(/^\./, "");
-  if (!extension) {
-    return Response.json(
-      ApiResponse.badRequest("Validation failed", {
-        file: "File name must have an extension",
-      }),
-      { status: HttpStatusCode.BAD_REQUEST },
+  if (!extension) throw fileError("File name must have an extension");
+
+  if (!ALLOWED_EXTENSIONS.includes(extension.toLowerCase())) {
+    throw fileError(
+      `File extension must be one of: ${ALLOWED_EXTENSIONS.join(", ")}`,
     );
   }
 
-  if (!ALLOWED_EXTENSIONS.includes(extension.toLowerCase())) {
-    return Response.json(
-      ApiResponse.badRequest("Validation failed", {
-        file: `File extension must be one of: ${ALLOWED_EXTENSIONS.join(", ")}`,
-      }),
-      { status: HttpStatusCode.BAD_REQUEST },
-    );
-  }
+  const exist = await Document.exists({
+    name: path.basename(file.name, path.extname(file.name)),
+  });
+  if (exist) throw fileError("A document with this name already exists");
 
   const content = Buffer.from(await file.arrayBuffer());
 
@@ -85,19 +75,11 @@ export const POST = withErrorHandler(async (request: Request) => {
   try {
     pageCount = await getPageCount(content, extension.toLowerCase());
   } catch {
-    return Response.json(
-      ApiResponse.badRequest("Validation failed", {
-        file: "File is corrupted or not a valid document",
-      }),
-      { status: HttpStatusCode.BAD_REQUEST },
-    );
+    throw fileError("File is corrupted or not a valid document");
   }
   if (pageCount !== null && pageCount > MAX_PAGES) {
-    return Response.json(
-      ApiResponse.badRequest("Validation failed", {
-        file: `Document has ${pageCount} pages; the limit is ${MAX_PAGES}`,
-      }),
-      { status: HttpStatusCode.BAD_REQUEST },
+    throw fileError(
+      `Document has ${pageCount} pages; the limit is ${MAX_PAGES}`,
     );
   }
 
