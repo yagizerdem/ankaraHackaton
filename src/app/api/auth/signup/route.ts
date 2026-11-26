@@ -5,18 +5,11 @@ import { withErrorHandler } from "@/error/with-error-handler";
 import { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
 import { hashPassword } from "@/lib/auth";
-import { zodErrorToFromErrors } from "@/lib/utils";
+import { zodErrorToFromErrors, getJsonBody } from "@/lib/utils";
 
 /** JSON body matching createSignUpSchema. */
 export const POST = withErrorHandler(async (request: Request) => {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json(ApiResponse.badRequest("Expected a JSON body"), {
-      status: HttpStatusCode.BAD_REQUEST,
-    });
-  }
+  const body = await getJsonBody(request);
 
   const result = createSignUpSchema(body).safeParse(body);
   if (!result.success) {
