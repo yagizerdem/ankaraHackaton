@@ -1,7 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CircleCheckIcon, CloudUploadIcon, FileUpIcon, LinkIcon, PlayCircleIcon } from "lucide-react";
+import {
+  CircleCheckIcon,
+  CloudUploadIcon,
+  FileUpIcon,
+  LinkIcon,
+  PlayCircleIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadCenter } from "../mockdata";
 import { DocumentsTable } from "./documents-table";
@@ -23,11 +29,16 @@ export function UploadCenter({ onUpload }: UploadCenterProps) {
         <div className="flex flex-col">
           <div className="flex items-center gap-1">
             <FileUpIcon className="size-5 shrink-0 text-primary" />
-            <h2 id="upload-center-title" className="text-headline-md text-on-surface">
+            <h2
+              id="upload-center-title"
+              className="text-headline-md text-on-surface"
+            >
               {uploadCenter.title}
             </h2>
           </div>
-          <p className="text-body-sm text-on-surface-variant">{uploadCenter.description}</p>
+          <p className="text-body-sm text-on-surface-variant">
+            {uploadCenter.description}
+          </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-1">
           <button
@@ -71,7 +82,9 @@ export function UploadCenter({ onUpload }: UploadCenterProps) {
         <span className="mb-2 flex size-14 items-center justify-center rounded-full bg-primary-container/20 text-primary transition-transform group-hover:scale-110 motion-reduce:transition-none">
           <CloudUploadIcon className="size-8" />
         </span>
-        <span className="mb-1 text-title-md text-on-surface">{uploadCenter.dropTitle}</span>
+        <span className="mb-1 text-title-md text-on-surface">
+          {uploadCenter.dropTitle}
+        </span>
         <span className="mb-2 max-w-xl text-body-sm text-on-surface-variant">
           {uploadCenter.dropHint}
         </span>
