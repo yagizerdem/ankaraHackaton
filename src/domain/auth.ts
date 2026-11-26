@@ -19,6 +19,17 @@ export function createSignUpSchema(data: unknown) {
   return schema;
 }
 
+export function createSignUpFormSchema(data: unknown) {
+  return createSignUpSchema(data)
+    .extend({
+      confirmPassword: z.string({ error: "Please confirm your password" }),
+    })
+    .refine((values) => values.password === values.confirmPassword, {
+      path: ["confirmPassword"],
+      error: "Passwords do not match",
+    });
+}
+
 export type SignInInput = z.infer<ReturnType<typeof createSignInSchema>>;
 export type SignUpInput = z.infer<ReturnType<typeof createSignUpSchema>>;
 

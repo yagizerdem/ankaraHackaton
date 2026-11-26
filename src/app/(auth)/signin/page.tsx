@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,18 +19,74 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { createSignInSchema } from "@/domain/auth";
-import { useAuthForm } from "@/hooks/use-auth-form";
+import { createSignInSchema, type SignInResponse } from "@/domain/auth";
+import type { FromErrors } from "@/error/app-error";
+import type { ApiResponse } from "@/lib/api-response";
+import { cameraFlashEffect, zodErrorToFromErrors } from "@/lib/utils";
+import { PasswordInput } from "@/app/(auth)/components/password-input";
+import { toast } from "sonner";
 
 const signInSchema = createSignInSchema(undefined);
+
 export default function SignInPage() {
-  const { errors, formError, pending, onSubmit } = useAuthForm(
-    signInSchema,
-    "/api/auth/signin",
-  );
+  const [formErrors, setFormErrors] = useState<FromErrors>({});
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string>("");
+  const router = useRouter();
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    // Empty inputs become undefined so optional fields pass validation.
+    const values = Object.fromEntries(
+      [...new FormData(event.currentTarget)].map(([key, value]) => [
+        key,
+        value === "" ? undefined : value,
+      ]),
+    );
+
+    const parsed = signInSchema.safeParse(values);
+    if (!parsed.success) {
+      setFormErrors(zodErrorToFromErrors(parsed.error));
+      toast.error("Please fix the errors in the form.");
+      return;
+    }
+    setFormErrors({});
+
+    setPending(true);
+    try {
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(parsed.data),
+      });
+
+      console.log(response);
+
+      if (response.ok) {
+        toast.success("Signed in successfully");
+        router.push("/");
+        cameraFlashEffect();
+        return;
+      }
+
+      const body: ApiResponse<SignInResponse> | null = await response
+        .json()
+        .catch(() => null);
+      if (body?.fromErrors) setFormErrors(body.fromErrors);
+      setError(body?.message ?? "Something went wrong");
+      toast.error(body?.message ?? "Something went wrong");
+    } catch {
+      setError("Network error, please try again");
+      toast.error("Network error, please try again");
+    } finally {
+      setPending(false);
+    }
+  }
 
   return (
-    <Card>
+    <Card className="shadow-xl shadow-black/10 dark:shadow-black/50">
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
         <CardDescription>Enter your email and password.</CardDescription>
@@ -36,29 +94,29 @@ export default function SignInPage() {
       <CardContent>
         <form id="signin-form" onSubmit={onSubmit} noValidate>
           <FieldGroup>
-            <Field data-invalid={!!errors.email}>
+            <Field data-invalid={!!formErrors.email}>
               <FieldLabel htmlFor="email">Email</FieldLabel>
               <Input
+                className="border-foreground/20 dark:border-foreground/25"
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
-                aria-invalid={!!errors.email}
+                aria-invalid={!!formErrors.email}
               />
-              <FieldError>{errors.email}</FieldError>
+              <FieldError>{formErrors.email}</FieldError>
             </Field>
-            <Field data-invalid={!!errors.password}>
+            <Field data-invalid={!!formErrors.password}>
               <FieldLabel htmlFor="password">Password</FieldLabel>
-              <Input
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
                 autoComplete="current-password"
-                aria-invalid={!!errors.password}
+                aria-invalid={!!formErrors.password}
               />
-              <FieldError>{errors.password}</FieldError>
+              <FieldError>{formErrors.password}</FieldError>
             </Field>
-            {formError && <FieldError>{formError}</FieldError>}
+            {error && <FieldError>{error}</FieldError>}
           </FieldGroup>
         </form>
       </CardContent>
