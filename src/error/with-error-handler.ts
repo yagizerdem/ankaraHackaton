@@ -2,6 +2,7 @@ import { unstable_rethrow } from "next/navigation";
 import { AppError } from "@/error/app-error";
 import { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
+import { handleMongoError, isMongoError } from "./mongo-errors";
 
 /**
  * Wraps an App Router route handler so uncaught errors become an ApiResponse
@@ -31,6 +32,11 @@ export function withErrorHandler<TReq extends Request, TCtx>(
           data: undefined,
         });
         return Response.json(body, { status: error.httpStatusCode });
+      }
+
+      if (isMongoError(error)) {
+        const body = handleMongoError(error);
+        return Response.json(body, { status: body.httpStatusCode });
       }
 
       return Response.json(ApiResponse.internalServerError(), {
