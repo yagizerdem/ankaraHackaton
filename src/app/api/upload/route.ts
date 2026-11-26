@@ -6,9 +6,12 @@ import { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
 import { verifySessionAndGetUser, SESSION_COOKIE } from "@/lib/auth";
 import { cookies } from "next/headers";
+import { getPageCount } from "@/lib/document/page-count";
 
 // MongoDB caps a single document at 16MB; leave headroom for the other fields.
-const MAX_FILE_SIZE = 15 * 1024 * 1024;
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB limit for uploaded files
+const ALLOWED_EXTENSIONS = ["pdf", "doc", "docx", "txt"]; // Allowed file extensions
+const MAX_PAGES = 50;
 
 /** multipart/form-data with the file under the `file` field. */
 export const POST = withErrorHandler(async (request: Request) => {
@@ -47,6 +50,7 @@ export const POST = withErrorHandler(async (request: Request) => {
       { status: HttpStatusCode.BAD_REQUEST },
     );
   }
+
   if (file.size > MAX_FILE_SIZE) {
     return Response.json(
       ApiResponse.payloadTooLarge(
@@ -66,12 +70,44 @@ export const POST = withErrorHandler(async (request: Request) => {
     );
   }
 
+  if (!ALLOWED_EXTENSIONS.includes(extension.toLowerCase())) {
+    return Response.json(
+      ApiResponse.badRequest("Validation failed", {
+        file: `File extension must be one of: ${ALLOWED_EXTENSIONS.join(", ")}`,
+      }),
+      { status: HttpStatusCode.BAD_REQUEST },
+    );
+  }
+
+  const content = Buffer.from(await file.arrayBuffer());
+
+  let pageCount: number | null;
+  try {
+    pageCount = await getPageCount(content, extension.toLowerCase());
+  } catch {
+    return Response.json(
+      ApiResponse.badRequest("Validation failed", {
+        file: "File is corrupted or not a valid document",
+      }),
+      { status: HttpStatusCode.BAD_REQUEST },
+    );
+  }
+  if (pageCount !== null && pageCount > MAX_PAGES) {
+    return Response.json(
+      ApiResponse.badRequest("Validation failed", {
+        file: `Document has ${pageCount} pages; the limit is ${MAX_PAGES}`,
+      }),
+      { status: HttpStatusCode.BAD_REQUEST },
+    );
+  }
+
   await dbConnect();
   const document = await Document.create({
     name: path.basename(file.name, path.extname(file.name)),
     extension,
     mimeType: file.type || "application/octet-stream",
-    content: Buffer.from(await file.arrayBuffer()),
+    content,
+    pageCount,
   });
 
   return Response.json(
@@ -82,6 +118,7 @@ export const POST = withErrorHandler(async (request: Request) => {
         extension: document.extension,
         mimeType: document.mimeType,
         size: file.size,
+        pageCount,
         createdAt: document.createdAt,
       },
       "Document uploaded",
