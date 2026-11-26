@@ -6,10 +6,22 @@ import { ChevronsUpDownIcon, EllipsisVerticalIcon, UserIcon } from "lucide-react
 import { activeCourse, navItems, student } from "@/app/student-panel/dashboard/mockdata";
 import { cn } from "@/lib/utils";
 
-/** Panel navigation; the active item follows the current URL. */
+/**
+ * Panel navigation; the active item follows the current URL. Reading the URL
+ * is request-time data, so the layout renders this inside <Suspense> with
+ * PanelSidebarFallback.
+ */
 export function PanelSidebar() {
+  return <SidebarBody pathname={usePathname()} />;
+}
+
+/** The same sidebar with no item highlighted, while the URL streams in. */
+export function PanelSidebarFallback() {
+  return <SidebarBody pathname={null} />;
+}
+
+function SidebarBody({ pathname }: { pathname: string | null }) {
   const router = useRouter();
-  const pathname = usePathname();
   const CourseIcon = activeCourse.icon;
 
   return (
@@ -19,7 +31,8 @@ export function PanelSidebar() {
           const Icon = item.icon;
           // Nested pages (e.g. a single exam) keep their section highlighted.
           const active =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+            pathname !== null &&
+            (pathname === item.href || pathname.startsWith(`${item.href}/`));
           return (
             <button
               key={item.id}
