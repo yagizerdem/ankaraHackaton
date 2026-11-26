@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronsUpDownIcon, EllipsisVerticalIcon, UserIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { activeCourse, navItems, student } from "@/app/student-panel/dashboard/mockdata";
 
+import { activeCourse, navItems, student } from "@/app/student-panel/dashboard/mockdata";
+import { cn } from "@/lib/utils";
+
+/** Panel navigation; the active item follows the current URL. */
 export function PanelSidebar() {
-  // Only the dashboard exists for now; the rest just show the active state.
-  const [activeId, setActiveId] = useState(navItems[0].id);
+  const router = useRouter();
+  const pathname = usePathname();
   const CourseIcon = activeCourse.icon;
 
   return (
@@ -15,13 +17,18 @@ export function PanelSidebar() {
       <nav aria-label="Student panel" className="flex flex-col gap-1 px-4">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const active = item.id === activeId;
+          // Nested pages (e.g. a single exam) keep their section highlighted.
+          const active =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <button
               key={item.id}
               type="button"
               aria-current={active ? "page" : undefined}
-              onClick={() => setActiveId(item.id)}
+              onClick={() => router.push(item.href)}
+              // Start loading the page before the click lands.
+              onPointerEnter={() => router.prefetch(item.href)}
+              onFocus={() => router.prefetch(item.href)}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-4 py-2 text-left text-label-md transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                 active

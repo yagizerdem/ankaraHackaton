@@ -32,16 +32,17 @@ export const activeCourse = {
 export interface NavItem {
   id: string;
   label: string;
+  href: string;
   icon: LucideIcon;
 }
 
 export const navItems: NavItem[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboardIcon },
-  { id: "documents", label: "Documents & Upload", icon: FileUpIcon },
-  { id: "graph", label: "Knowledge Graph", icon: NetworkIcon },
-  { id: "assessment", label: "Adaptive Exam & Assessment", icon: ClipboardCheckIcon },
-  { id: "path", label: "Personal Learning Path", icon: RouteIcon },
-  { id: "analytics", label: "Teacher / Class Analytics", icon: ChartColumnIcon },
+  { id: "dashboard", label: "Dashboard", href: "/student-panel/dashboard", icon: LayoutDashboardIcon },
+  { id: "documents", label: "Documents & Upload", href: "/student-panel/uploads", icon: FileUpIcon },
+  { id: "graph", label: "Knowledge Graph", href: "/student-panel/knowledge-graph", icon: NetworkIcon },
+  { id: "assessment", label: "Adaptive Exam & Assessment", href: "/student-panel/assessment", icon: ClipboardCheckIcon },
+  { id: "path", label: "Personal Learning Path", href: "/student-panel/learning-path", icon: RouteIcon },
+  { id: "analytics", label: "Teacher / Class Analytics", href: "/student-panel/analytics", icon: ChartColumnIcon },
 ];
 
 export const notifications = { unread: 1 };
