@@ -10,6 +10,7 @@ export type Difficulty = "beginner" | "intermediate" | "advanced" | "expert";
 
 export interface GraphOption {
   id: string;
+  documentId: string;
   documentName: string;
   extension: string;
   topicCount: number;
@@ -87,6 +88,7 @@ export async function getKnowledgeGraphs(
     const document = documentsById.get(graph.documentId.toString());
     return {
       id: graph._id.toString(),
+      documentId: graph.documentId.toString(),
       documentName: document?.name ?? "Untitled document",
       extension: document?.extension ?? "",
       topicCount: graph.nodes.length,

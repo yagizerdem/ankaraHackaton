@@ -1,10 +1,11 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronsUpDownIcon, EllipsisVerticalIcon, UserIcon } from "lucide-react";
+import { UserIcon } from "lucide-react";
 
-import { activeCourse, navItems, student } from "@/app/student-panel/dashboard/mockdata";
+import { navItems } from "@/app/student-panel/nav-items";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/providers/auth-provider";
 
 /**
  * Panel navigation; the active item follows the current URL. Reading the URL
@@ -22,7 +23,8 @@ export function PanelSidebarFallback() {
 
 function SidebarBody({ pathname }: { pathname: string | null }) {
   const router = useRouter();
-  const CourseIcon = activeCourse.icon;
+  const { user, isLoading } = useAuth();
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
 
   return (
     <aside className="sticky top-14 hidden h-[calc(100dvh-3.5rem)] w-72 shrink-0 flex-col justify-between bg-surface-container-low py-4 lg:flex">
@@ -56,36 +58,28 @@ function SidebarBody({ pathname }: { pathname: string | null }) {
         })}
       </nav>
 
-      <div className="flex flex-col gap-4 px-4">
-        <div className="flex flex-col gap-1 rounded-lg bg-surface-container p-2">
-          <div className="flex items-center justify-between text-on-surface-variant">
-            <span className="text-label-sm uppercase">Active Course</span>
-            <ChevronsUpDownIcon className="size-4" />
+      <div className="px-4">
+        {user ? (
+          <div className="flex items-center gap-2 rounded-lg bg-surface-container-high p-2">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
+              <UserIcon aria-hidden className="size-4" />
+            </div>
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-label-md text-on-surface">
+                {fullName || user.username}
+              </span>
+              <span className="truncate text-body-sm text-on-surface-variant">
+                {user.email}
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <CourseIcon className="size-4 shrink-0 text-primary" />
-            <span className="truncate text-label-md text-on-surface">
-              {activeCourse.code} - {activeCourse.name}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 rounded-lg bg-surface-container-high p-2">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary">
-            <UserIcon className="size-4" />
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-label-md text-on-surface">{student.fullName}</span>
-            <span className="truncate text-body-sm text-on-surface-variant">{student.department}</span>
-          </div>
-          <button
-            type="button"
-            aria-label="Account options"
-            className="rounded text-on-surface-variant hover:text-on-surface"
-          >
-            <EllipsisVerticalIcon className="size-5" />
-          </button>
-        </div>
+        ) : (
+          !isLoading && (
+            <p className="rounded-lg bg-surface-container-high p-2 text-body-sm text-on-surface-variant">
+              Sign in to see your own data.
+            </p>
+          )
+        )}
       </div>
     </aside>
   );

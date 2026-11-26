@@ -30,6 +30,8 @@ export interface ReportTopic {
   id: string;
   label: string;
   mastery: number;
+  correct: number;
+  incorrect: number;
   evidence: number;
   status: MasteryStatus;
 }
@@ -143,6 +145,8 @@ export async function getLearningReport(
       id,
       label: topic.label,
       mastery: masteryScore(record.correct, record.incorrect),
+      correct: record.correct,
+      incorrect: record.incorrect,
       evidence: record.correct + record.incorrect,
       status: masteryStatus(record.correct, record.incorrect),
     };

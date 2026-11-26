@@ -1,8 +1,25 @@
-import { BotIcon, CircleAlertIcon, ClipboardCheckIcon, SplitIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { learningPath, type LearningStep } from "@/app/student-panel/dashboard/mockdata";
+import Link from "next/link";
+import { CircleAlertIcon, SplitIcon } from "lucide-react";
 
-export function LearningPath() {
+import { cn } from "@/lib/utils";
+
+import type { DashboardData } from "@/app/student-panel/dashboard/data";
+import type { StepAction } from "@/lib/learning/path";
+
+const SHOWN_STEPS = 3;
+
+const ACTIONS: Record<StepAction, { label: string; chip: string; cta: string; exam: boolean }> = {
+  fix: { label: "Fix a misconception", chip: "bg-error/15 text-error", cta: "Review", exam: false },
+  test: { label: "Quick test", chip: "bg-surface-container-highest text-on-surface-variant", cta: "Take a test", exam: true },
+  study: { label: "Study and retest", chip: "bg-tertiary/15 text-tertiary", cta: "Review", exam: false },
+  goal: { label: "Goal topic", chip: "bg-primary/15 text-primary", cta: "Take a test", exam: true },
+};
+
+/** The next steps of the student's goal route, from the learning path. */
+export function LearningPath({ data }: { data: DashboardData }) {
+  const graphQuery = data.selectedGraphId ? `?graph=${data.selectedGraphId}` : "";
+  const steps = data.path?.steps.slice(0, SHOWN_STEPS) ?? [];
+
   return (
     <section
       id="learning-path"
@@ -11,93 +28,71 @@ export function LearningPath() {
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1">
-          <SplitIcon className="size-5 shrink-0 text-tertiary" />
-          <h3 id="learning-path-title" className="text-title-md text-on-surface">
-            {learningPath.title}
-          </h3>
+          <SplitIcon aria-hidden className="size-5 shrink-0 text-tertiary" />
+          <h2 id="learning-path-title" className="text-title-md text-on-surface">
+            {data.path ? `Route to ${data.path.target}` : "Your learning path"}
+          </h2>
         </div>
-        <span className="shrink-0 rounded bg-tertiary/15 px-1.5 py-0.5 text-mono-data text-[11px] text-tertiary">
-          {learningPath.tag}
-        </span>
+        <Link
+          href={`/student-panel/learning-path${graphQuery}`}
+          className="shrink-0 rounded text-label-md text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          {data.path ? "Full route" : "Set a goal"}
+        </Link>
       </div>
 
-      <ol className="flex flex-col gap-2">
-        {learningPath.steps.map((step) => (
-          <LearningStepCard key={step.id} step={step} />
-        ))}
-      </ol>
+      {!data.path ? (
+        <p className="text-body-sm text-on-surface-variant">
+          Pick a goal topic and your exam date. Your route will order its
+          prerequisites, skip what you&apos;ve mastered and split the rest
+          across the days you have.
+        </p>
+      ) : steps.length === 0 ? (
+        <p className="text-body-sm text-on-surface-variant">
+          You&apos;ve mastered {data.path.target} and everything it needs.
+          Take a final exam to confirm.
+        </p>
+      ) : (
+        <ol className="flex flex-col gap-2">
+          {steps.map((step, index) => {
+            const action = ACTIONS[step.action];
+            return (
+              <li
+                key={step.topicId}
+                className="flex flex-col gap-1 rounded-xl bg-surface-container-high p-2 shadow-sm"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span
+                    className={cn(
+                      "flex items-center gap-1 rounded-full px-2 py-0.5 text-label-sm",
+                      action.chip,
+                    )}
+                  >
+                    {step.action === "fix" && <CircleAlertIcon aria-hidden className="size-3" />}
+                    Step {index + 1} · {action.label}
+                  </span>
+                  <span className="shrink-0 text-mono-data text-[11px] text-on-surface-variant">
+                    {step.minutes} min
+                  </span>
+                </div>
+                <div className="text-label-md font-semibold text-on-surface">{step.label}</div>
+                <p className="text-body-sm text-on-surface-variant">{step.reason}</p>
+                <Link
+                  href={`${action.exam ? "/student-panel/assessment" : "/student-panel/knowledge-graph"}${graphQuery}`}
+                  className={cn(
+                    "mt-1 self-start rounded-lg px-2 py-1 text-label-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                    index === 0
+                      ? "bg-primary text-on-primary hover:bg-primary/90"
+                      : "bg-surface-container-highest text-on-surface hover:bg-surface-bright",
+                  )}
+                >
+                  {action.cta}
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      )}
     </section>
-  );
-}
-
-function LearningStepCard({ step }: { step: LearningStep }) {
-  const ActionIcon =
-    step.action.icon === "tutor" ? BotIcon : step.action.icon === "quiz" ? ClipboardCheckIcon : null;
-
-  return (
-    <li
-      className={cn(
-        "flex flex-col gap-1 rounded-xl p-2",
-        step.locked
-          ? "bg-surface-container-high/60"
-          : "bg-surface-container-high shadow-sm transition-colors hover:bg-surface-bright",
-      )}
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span
-          className={cn(
-            "flex items-center gap-1 rounded-full px-2 py-0.5 text-label-sm",
-            step.badgeClassName,
-          )}
-        >
-          {step.urgent && <CircleAlertIcon className="size-3" />}
-          {step.badge}
-        </span>
-        <span
-          className={cn(
-            "shrink-0 text-mono-data text-[11px]",
-            step.metaClassName,
-          )}
-        >
-          {step.meta}
-        </span>
-      </div>
-      <div
-        className={cn(
-          "text-label-md",
-          step.locked ? "font-medium text-on-surface-variant" : "font-semibold text-on-surface",
-        )}
-      >
-        {step.title}
-      </div>
-      {step.description && (
-        <p className="text-body-sm text-on-surface-variant">{step.description}</p>
-      )}
-      <div className="flex items-center justify-between gap-2 pt-1">
-        <button
-          type="button"
-          disabled={step.locked}
-          className={cn(
-            "flex items-center gap-1 rounded-lg px-2 py-1 text-label-sm transition-colors",
-            step.locked
-              ? "cursor-not-allowed bg-surface-container-highest text-outline opacity-60"
-              : step.action.variant === "primary"
-                ? "bg-primary text-on-primary hover:bg-primary/90"
-                : "bg-surface-container-highest text-on-surface hover:bg-surface-bright",
-          )}
-        >
-          {ActionIcon && <ActionIcon className="size-4" />}
-          {step.action.label}
-        </button>
-        <span
-          className={cn(
-            "text-mono-data text-[11px]",
-            step.locked ? "text-outline" : "text-on-surface-variant",
-          )}
-        >
-          {step.duration}
-        </span>
-      </div>
-    </li>
   );
 }
