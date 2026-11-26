@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { activeCourse, student, welcomeBanner } from "../mockdata";
+import { activeCourse, student, welcomeBanner } from "@/app/student-panel/dashboard/mockdata";
 
 export function WelcomeBanner() {
   return (

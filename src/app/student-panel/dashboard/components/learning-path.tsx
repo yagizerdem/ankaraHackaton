@@ -1,6 +1,6 @@
 import { BotIcon, CircleAlertIcon, ClipboardCheckIcon, SplitIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { learningPath, type LearningStep } from "../mockdata";
+import { learningPath, type LearningStep } from "@/app/student-panel/dashboard/mockdata";
 
 export function LearningPath() {
   return (

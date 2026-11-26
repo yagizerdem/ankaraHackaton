@@ -9,8 +9,8 @@ import {
   PlayCircleIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { uploadCenter } from "../mockdata";
-import { DocumentsTable } from "./documents-table";
+import { uploadCenter } from "@/app/student-panel/dashboard/mockdata";
+import { DocumentsTable } from "@/app/student-panel/dashboard/components/documents-table";
 
 interface UploadCenterProps {
   onUpload: () => void;

@@ -1,7 +1,7 @@
 import { FileTextIcon, NotebookPenIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { documents, type DocumentAction, type DocumentStatus } from "../mockdata";
-import { ProgressBar } from "./progress-bar";
+import { documents, type DocumentAction, type DocumentStatus } from "@/app/student-panel/dashboard/mockdata";
+import { ProgressBar } from "@/app/student-panel/dashboard/components/progress-bar";
 
 const actionStyles: Record<DocumentAction["variant"], string> = {
   neutral: "bg-surface-container-high text-on-surface hover:bg-surface-bright",

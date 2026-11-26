@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { BrainIcon, CircleCheckIcon, CircleXIcon, LightbulbIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { diagnosticQuestion as question } from "../mockdata";
+import { diagnosticQuestion as question } from "@/app/student-panel/dashboard/mockdata";
 
 export function DiagnosticQuestion() {
   const [selected, setSelected] = useState<string | null>(null);

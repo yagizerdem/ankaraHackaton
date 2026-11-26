@@ -1,7 +1,7 @@
 import { ArrowRightIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { statCards, type StatCard, type StatFooter } from "../mockdata";
-import { ProgressBar } from "./progress-bar";
+import { statCards, type StatCard, type StatFooter } from "@/app/student-panel/dashboard/mockdata";
+import { ProgressBar } from "@/app/student-panel/dashboard/components/progress-bar";
 
 export function StatCards() {
   return (

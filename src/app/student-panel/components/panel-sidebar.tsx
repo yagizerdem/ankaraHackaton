@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronsUpDownIcon, EllipsisVerticalIcon, UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { activeCourse, navItems, student } from "../mockdata";
+import { activeCourse, navItems, student } from "@/app/student-panel/dashboard/mockdata";
 
 export function PanelSidebar() {
   // Only the dashboard exists for now; the rest just show the active state.

@@ -1,7 +1,7 @@
 import { Inter } from "next/font/google";
 import AppLayout from "@/layouts/app-layout";
 import { cn } from "@/lib/utils";
-import { PanelSidebar } from "./components/panel-sidebar";
+import { PanelSidebar } from "@/app/student-panel/components/panel-sidebar";
 
 // The Stitch design system (DESIGN-*.md) sets every tier in Inter.
 const inter = Inter({ subsets: ["latin", "latin-ext"] });

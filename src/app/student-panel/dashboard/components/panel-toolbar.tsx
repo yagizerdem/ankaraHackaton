@@ -1,5 +1,5 @@
 import { BellIcon, PlusIcon, SearchIcon } from "lucide-react";
-import { notifications } from "../mockdata";
+import { notifications } from "@/app/student-panel/dashboard/mockdata";
 import { useUpload } from "@/providers/upload-provider";
 
 interface PanelToolbarProps {}

@@ -17,7 +17,7 @@ import {
   type GraphEdge,
   type GraphNode,
   type NodeStatus,
-} from "../mockdata";
+} from "@/app/student-panel/dashboard/mockdata";
 
 // Nodes have a fixed height so edges can attach to their exact borders.
 const NODE_HEIGHT = 76;
