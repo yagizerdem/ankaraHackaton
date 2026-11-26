@@ -8,3 +8,9 @@ export interface UploadDocumentResponse {
   pageCount: number | null;
   createdAt: Date;
 }
+
+export interface DeleteDocumentResponse {
+  id: string;
+  deletedChunks: number;
+  deletedGraphs: number;
+}

@@ -1,7 +1,10 @@
 "use client";
 
 import { createContext, useContext, useState } from "react";
-import type { UploadDocumentResponse } from "@/domain/document";
+import type {
+  DeleteDocumentResponse,
+  UploadDocumentResponse,
+} from "@/domain/document";
 import type { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
 import type { KnowledgeGraphResponse } from "@/domain/dag";
@@ -27,6 +30,9 @@ type UploadProviderState = {
   generateKnowledgeGraph: (
     documentId: string,
   ) => Promise<ApiResponse<KnowledgeGraphResponse>>;
+  deleteDocument: (
+    documentId: string,
+  ) => Promise<ApiResponse<DeleteDocumentResponse>>;
 };
 
 const initialState: UploadProviderState = {
@@ -42,6 +48,9 @@ const initialState: UploadProviderState = {
     throw new Error("not implemented");
   },
   generateKnowledgeGraph: async () => {
+    throw new Error("not implemented");
+  },
+  deleteDocument: async () => {
     throw new Error("not implemented");
   },
 };
@@ -150,6 +159,37 @@ export function UploadProvider({ children, ...props }: UploadProviderProps) {
     }
   }
 
+  async function deleteDocument(
+    documentId: string,
+  ): Promise<ApiResponse<DeleteDocumentResponse>> {
+    try {
+      const response = await fetch(
+        `/api/upload/${encodeURIComponent(documentId)}`,
+        { method: "DELETE" },
+      );
+
+      const json = (await response
+        .json()
+        .catch(() => null)) as ApiResponse<DeleteDocumentResponse> | null;
+
+      return (
+        json ?? {
+          message: "Couldn't delete the document, try again",
+          error: "Couldn't delete the document, try again",
+          httpStatusCode: response.status,
+          isSuccess: false,
+        }
+      );
+    } catch {
+      return {
+        message: "Network error, check your connection",
+        error: "Network error, check your connection",
+        httpStatusCode: HttpStatusCode.SERVICE_UNAVAILABLE,
+        isSuccess: false,
+      };
+    }
+  }
+
   const value = {
     showUploadModal,
     setShowUploadModal,
@@ -159,6 +199,7 @@ export function UploadProvider({ children, ...props }: UploadProviderProps) {
     uploadFile,
     generateEmbeddings,
     generateKnowledgeGraph,
+    deleteDocument,
   };
 
   return (
