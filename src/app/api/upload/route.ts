@@ -4,12 +4,24 @@ import { Document } from "@/models/document";
 import { withErrorHandler } from "@/error/with-error-handler";
 import { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
+import { verifySessionAndGetUser, SESSION_COOKIE } from "@/lib/auth";
+import { cookies } from "next/headers";
 
 // MongoDB caps a single document at 16MB; leave headroom for the other fields.
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
 /** multipart/form-data with the file under the `file` field. */
 export const POST = withErrorHandler(async (request: Request) => {
+  const user = await verifySessionAndGetUser(
+    (await cookies()).get(SESSION_COOKIE)?.value,
+  );
+
+  if (!user) {
+    return Response.json(ApiResponse.unauthorized("Sign in required"), {
+      status: HttpStatusCode.UNAUTHORIZED,
+    });
+  }
+
   let formData: FormData;
   try {
     formData = await request.formData();
