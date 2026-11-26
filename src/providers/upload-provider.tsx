@@ -4,6 +4,7 @@ import { createContext, useContext, useState } from "react";
 import type { UploadDocumentResponse } from "@/domain/document";
 import type { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
+import type { KnowledgeGraphResponse } from "@/domain/dag";
 import type { EmbeddingResponse } from "@/domain/rag";
 
 export const UPLOAD_STEPS = ["upload", "chunking", "embedding", "dag"] as const;
@@ -23,6 +24,9 @@ type UploadProviderState = {
   generateEmbeddings: (
     documentId: string,
   ) => Promise<ApiResponse<EmbeddingResponse>>;
+  generateKnowledgeGraph: (
+    documentId: string,
+  ) => Promise<ApiResponse<KnowledgeGraphResponse>>;
 };
 
 const initialState: UploadProviderState = {
@@ -35,6 +39,9 @@ const initialState: UploadProviderState = {
     throw new Error("not implemented");
   },
   generateEmbeddings: async () => {
+    throw new Error("not implemented");
+  },
+  generateKnowledgeGraph: async () => {
     throw new Error("not implemented");
   },
 };
@@ -111,6 +118,38 @@ export function UploadProvider({ children, ...props }: UploadProviderProps) {
     }
   }
 
+  async function generateKnowledgeGraph(
+    documentId: string,
+  ): Promise<ApiResponse<KnowledgeGraphResponse>> {
+    try {
+      const response = await fetch("/api/dag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
+      });
+
+      const json = (await response
+        .json()
+        .catch(() => null)) as ApiResponse<KnowledgeGraphResponse> | null;
+
+      return (
+        json ?? {
+          message: "Knowledge graph generation failed, try again",
+          error: "Knowledge graph generation failed, try again",
+          httpStatusCode: response.status,
+          isSuccess: false,
+        }
+      );
+    } catch {
+      return {
+        message: "Network error, check your connection",
+        error: "Network error, check your connection",
+        httpStatusCode: HttpStatusCode.SERVICE_UNAVAILABLE,
+        isSuccess: false,
+      };
+    }
+  }
+
   const value = {
     showUploadModal,
     setShowUploadModal,
@@ -119,6 +158,7 @@ export function UploadProvider({ children, ...props }: UploadProviderProps) {
     setCurrentStep,
     uploadFile,
     generateEmbeddings,
+    generateKnowledgeGraph,
   };
 
   return (
