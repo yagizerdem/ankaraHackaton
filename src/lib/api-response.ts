@@ -1,8 +1,5 @@
+import { FromErrors } from "@/error/app-error";
 import HttpStatusCode from "@/lib/http-status-code";
-
-interface FromErrors {
-  [key: string]: string;
-}
 
 export class ApiResponse<T> {
   public message: string;
