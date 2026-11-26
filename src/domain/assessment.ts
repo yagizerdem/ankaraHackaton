@@ -1,6 +1,7 @@
 import * as z from "zod";
 
 import type { MasteryStatus } from "@/lib/assessment/mastery";
+import type { Calibration } from "@/lib/learning/calibration";
 
 const objectId = (name: string) =>
   z.string().regex(/^[a-f\d]{24}$/i, `${name} must be a valid id`);
@@ -28,6 +29,9 @@ export function createAnswerSchema() {
     questionId: objectId("questionId"),
     optionId: z.enum(["a", "b", "c", "d"], {
       error: "Choose one of the options",
+    }),
+    confidence: z.enum(["sure", "unsure", "guess"], {
+      error: "Say how sure you are",
     }),
   });
 }
@@ -73,6 +77,8 @@ export interface GapAnalysis {
 export interface AssessmentResults {
   topics: TopicResult[];
   gaps: GapAnalysis[];
+  /** How well confidence matched results in this exam. */
+  calibration: Calibration;
 }
 
 export interface AssessmentView {
@@ -93,6 +99,8 @@ export interface AnswerFeedback {
   selectedOptionId: string;
   correctOptionId: string;
   explanation: string;
+  /** The misconception behind the chosen wrong option, if known. */
+  misconception: string | null;
   sourcePages: number[];
   sources: { id: string; excerpt: string; lines: { from: number; to: number } }[];
   /** The exam after this answer: the next question, or the results. */

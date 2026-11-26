@@ -12,8 +12,8 @@ import { getJsonBody, zodErrorToFromErrors } from "@/lib/utils";
 
 import type { AssessmentSummary, AssessmentView } from "@/domain/assessment";
 
-// Generating the first question calls Gemini.
-export const maxDuration = 60;
+// Starting writes the whole exam with one Gemini call, which can take a while.
+export const maxDuration = 120;
 
 async function requireUser() {
   await dbConnect();
@@ -54,7 +54,7 @@ export const POST = withErrorHandler(async (request: Request) => {
     if (error instanceof AppError) throw error;
     console.error(error);
     throw new AppError(
-      "Couldn't generate the first question; try again",
+      "Couldn't write the exam; try again",
       HttpStatusCode.BAD_GATEWAY,
     );
   }

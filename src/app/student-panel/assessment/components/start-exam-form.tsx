@@ -163,7 +163,7 @@ export function StartExamForm({ graphs, selectedGraphId, topics }: StartExamForm
               aria-hidden
               className="size-4 animate-spin motion-reduce:animate-none"
             />
-            Writing your first question...
+            Writing your exam, about a minute...
           </>
         ) : (
           <>

@@ -1,9 +1,15 @@
 import mongoose from "mongoose";
 
 import { AppError } from "@/error/app-error";
-import { ancestorsOf, planNext } from "@/lib/assessment/adaptive";
-import { generateQuestion } from "@/lib/assessment/generate-question";
+import {
+  QUESTIONS_PER_TOPIC,
+  ancestorsOf,
+  planNext,
+} from "@/lib/assessment/adaptive";
+import { generateExamQuestions } from "@/lib/assessment/generate-question";
+import { GENERATION_MODEL } from "@/lib/ai/gemini";
 import { masteryScore, masteryStatus } from "@/lib/assessment/mastery";
+import { calibrate } from "@/lib/learning/calibration";
 import HttpStatusCode from "@/lib/http-status-code";
 import { retrieveChunks } from "@/lib/rag/retrieve";
 import { Assessment } from "@/models/assessment";
@@ -32,7 +38,10 @@ const EXCERPT_LENGTH = 280;
 type UserId = mongoose.Types.ObjectId;
 
 /** A graph the user owns, with lookups the adaptive engine needs. */
-async function loadGraph(graphId: string | mongoose.Types.ObjectId, userId: UserId) {
+export async function loadGraph(
+  graphId: string | mongoose.Types.ObjectId,
+  userId: UserId,
+) {
   const graph = await KnowledgeGraph.findById(graphId).lean();
   // Graphs belong to documents, so ownership goes through Document.
   const document = graph
@@ -69,7 +78,7 @@ async function loadGraph(graphId: string | mongoose.Types.ObjectId, userId: User
   };
 }
 
-type GraphContext = Awaited<ReturnType<typeof loadGraph>>;
+export type GraphContext = Awaited<ReturnType<typeof loadGraph>>;
 
 async function masteryByTopic(userId: UserId, graphId: mongoose.Types.ObjectId) {
   const records = await TopicMastery.find({ userId, graphId }).lean();
@@ -86,60 +95,84 @@ function difficultyFor(record?: { correct: number; incorrect: number }): Questio
 }
 
 /**
- * A question on the topic the student hasn't seen: a cached one if there is
- * one, otherwise a new one generated from retrieved chunks (RAG).
+ * Topics the exam might reach: the targets, then their prerequisites nearest
+ * first (the planner only ever moves from a topic to its prerequisites).
+ * Twice as many as the budget can cover, so the adaptive path has room.
  */
-async function obtainQuestion(
+function bankTopics(context: GraphContext, targets: string[], questionBudget: number) {
+  const limit = Math.max(targets.length, (questionBudget / QUESTIONS_PER_TOPIC) * 2);
+  const picked = [...targets];
+  const queue = [...targets];
+  for (let i = 0; i < queue.length && picked.length < limit; i++) {
+    for (const parent of context.prerequisitesOf.get(queue[i]) ?? []) {
+      if (picked.length >= limit) break;
+      if (!picked.includes(parent)) {
+        picked.push(parent);
+        queue.push(parent);
+      }
+    }
+  }
+  return picked;
+}
+
+/**
+ * Writes the exam's whole question bank with one Gemini call, grounded in
+ * chunks retrieved for each topic (RAG), and stores it.
+ */
+async function buildQuestionBank(
   context: GraphContext,
-  topicId: string,
+  topicIds: string[],
   userId: UserId,
   signal?: AbortSignal,
 ) {
-  const topic = context.topicsById.get(topicId);
-  if (!topic) throw new Error(`Topic ${topicId} is not in the graph`);
-
-  const [mastery, seen] = await Promise.all([
-    TopicMastery.findOne({ userId, topicId }).lean(),
-    Assessment.distinct("answers.questionId", { userId }),
+  const [mastery, previous] = await Promise.all([
+    masteryByTopic(userId, context.graph._id),
+    Question.find({ topicId: { $in: topicIds } }).select("topicId prompt").lean(),
   ]);
-  const difficulty = difficultyFor(mastery ?? undefined);
 
-  const cached = await Question.findOne({
-    topicId,
-    difficulty,
-    _id: { $nin: seen },
-  });
-  if (cached) return cached;
-
-  const existing = await Question.find({ topicId }).select("prompt").limit(10).lean();
-  const query = [topic.label, topic.description, ...(topic.learningObjectives ?? [])].join("\n");
-  const chunks = await retrieveChunks(context.graph.documentId, query, { signal });
-
-  const generated = await generateQuestion(
-    {
-      label: topic.label,
-      description: topic.description,
-      learningObjectives: topic.learningObjectives ?? [],
-      misconceptions: topic.misconceptions ?? [],
-    },
-    chunks,
-    difficulty,
-    { avoid: existing.map((question) => question.prompt), signal },
+  const requests = await Promise.all(
+    topicIds.map(async (topicId) => {
+      const topic = context.topicsById.get(topicId)!;
+      const query = [
+        topic.label,
+        topic.description,
+        ...(topic.learningObjectives ?? []),
+      ].join("\n");
+      return {
+        topicId,
+        label: topic.label,
+        description: topic.description,
+        learningObjectives: topic.learningObjectives ?? [],
+        misconceptions: topic.misconceptions ?? [],
+        difficulty: difficultyFor(mastery.get(topicId)),
+        count: QUESTIONS_PER_TOPIC,
+        chunks: await retrieveChunks(context.graph.documentId, query, { limit: 3, signal }),
+        avoid: previous
+          .filter((question) => question.topicId.toString() === topicId)
+          .slice(-6)
+          .map((question) => question.prompt),
+      };
+    }),
   );
 
-  return Question.create({
-    graphId: context.graph._id,
-    topicId,
-    documentId: context.graph.documentId,
-    prompt: generated.prompt,
-    options: generated.options,
-    correctOptionId: generated.correctOptionId,
-    explanation: generated.explanation,
-    difficulty,
-    sourceChunkIds: generated.sourceChunkIds,
-    sourcePages: topic.sourcePages ?? [],
-    generationModel: generated.model,
-  });
+  const generated = await generateExamQuestions(requests, { signal });
+  const difficultyOf = new Map(requests.map((request) => [request.topicId, request.difficulty]));
+
+  return Question.insertMany(
+    generated.map((question) => ({
+      graphId: context.graph._id,
+      topicId: question.topicId,
+      documentId: context.graph.documentId,
+      prompt: question.prompt,
+      options: question.options,
+      correctOptionId: question.correctOptionId,
+      explanation: question.explanation,
+      difficulty: difficultyOf.get(question.topicId)!,
+      sourceChunkIds: question.sourceChunkIds,
+      sourcePages: context.topicsById.get(question.topicId)?.sourcePages ?? [],
+      generationModel: GENERATION_MODEL,
+    })),
+  );
 }
 
 /** Key topics: the most important ones, as the default exam targets. */
@@ -150,7 +183,33 @@ function defaultTargets(context: GraphContext) {
     .map((topic) => topic._id.toString());
 }
 
-function plan(assessment: AssessmentDocument, context: GraphContext) {
+/** Bank questions on each topic this exam hasn't asked yet, in order. */
+async function unaskedByTopic(assessment: AssessmentDocument) {
+  const asked = new Set(assessment.answers.map((answer) => answer.questionId.toString()));
+  // Exams saved without a bank (e.g. by a server running an older schema)
+  // fall back to every question written for the graph, so they can finish.
+  const bank = await Question.find(
+    assessment.questionIds?.length
+      ? { _id: { $in: assessment.questionIds } }
+      : { graphId: assessment.graphId },
+  )
+    .sort({ createdAt: 1 })
+    .select("topicId")
+    .lean();
+  const byTopic = new Map<string, mongoose.Types.ObjectId[]>();
+  for (const question of bank) {
+    if (asked.has(question._id.toString())) continue;
+    const topicId = question.topicId.toString();
+    byTopic.set(topicId, [...(byTopic.get(topicId) ?? []), question._id]);
+  }
+  return byTopic;
+}
+
+function plan(
+  assessment: AssessmentDocument,
+  context: GraphContext,
+  unasked: Map<string, mongoose.Types.ObjectId[]>,
+) {
   return planNext({
     pending: assessment.pending.map((entry) => ({
       topicId: entry.topicId.toString(),
@@ -163,39 +222,28 @@ function plan(assessment: AssessmentDocument, context: GraphContext) {
     questionBudget: assessment.questionBudget,
     prerequisitesOf: context.prerequisitesOf,
     labelOf: context.labelOf,
+    hasQuestion: (topicId) => (unasked.get(topicId)?.length ?? 0) > 0,
   });
 }
 
 /**
- * Moves the exam on: picks the next topic, or marks the exam completed. With
- * `generate`, also attaches a question; otherwise the next GET does that, so
- * answering stays fast while the client prefetches the next question.
- * Planning is idempotent, so running it again after an answer is safe.
+ * Moves the exam on: picks the next topic and a question on it from the bank,
+ * or marks the exam completed. No Gemini call; planning is idempotent.
  */
-async function advance(
-  assessment: AssessmentDocument,
-  context: GraphContext,
-  userId: UserId,
-  { generate, signal }: { generate: boolean; signal?: AbortSignal },
-) {
-  const { pending, next } = plan(assessment, context);
+async function advance(assessment: AssessmentDocument, context: GraphContext) {
+  const unasked = await unaskedByTopic(assessment);
+  const { pending, next } = plan(assessment, context, unasked);
   assessment.set("pending", pending);
-  assessment.currentQuestionId = null;
-  assessment.currentReason = null;
 
-  if (!next) {
+  if (next) {
+    assessment.currentQuestionId = unasked.get(next.topicId)![0];
+    assessment.currentReason = next.reason;
+  } else {
+    assessment.currentQuestionId = null;
+    assessment.currentReason = null;
     assessment.status = "completed";
     assessment.completedAt = new Date();
-    await assessment.save();
-    return;
   }
-
-  assessment.currentReason = next.reason;
-  await assessment.save();
-  if (!generate) return;
-
-  const question = await obtainQuestion(context, next.topicId, userId, signal);
-  assessment.currentQuestionId = question._id;
   await assessment.save();
 }
 
@@ -265,7 +313,7 @@ async function buildResults(
     return { targetId, targetLabel: target, targetStatus, weak, unmeasured, recommendation };
   });
 
-  return { topics, gaps };
+  return { topics, gaps, calibration: calibrate(assessment.answers) };
 }
 
 async function buildView(
@@ -345,33 +393,27 @@ export async function startAssessment(
     })),
   });
 
-  // Generate the first question before saving, so a Gemini failure doesn't
-  // leave an empty exam behind.
-  const { pending, next } = plan(assessment, context);
-  const question = await obtainQuestion(context, next!.topicId, userId, signal);
-  assessment.set("pending", pending);
-  assessment.currentQuestionId = question._id;
-  assessment.currentReason = next!.reason;
-  await assessment.save();
+  // Write the whole exam before saving, so a Gemini failure doesn't leave an
+  // empty exam behind.
+  const bank = await buildQuestionBank(
+    context,
+    bankTopics(context, targets, input.questionBudget),
+    userId,
+    signal,
+  );
+  assessment.questionIds = bank.map((question) => question._id);
+  await advance(assessment, context);
 
   return buildView(assessment, context, userId);
 }
 
-/**
- * The exam's current state. If an earlier step saved the plan but failed to
- * generate the question, this retries the generation.
- */
+/** The exam's current question, or its results once finished. */
 export async function getAssessment(
   assessmentId: string,
   userId: UserId,
-  signal?: AbortSignal,
 ): Promise<AssessmentView> {
   const assessment = await findOwnAssessment(assessmentId, userId);
   const context = await loadGraph(assessment.graphId, userId);
-
-  if (assessment.status === "in_progress" && !assessment.currentQuestionId) {
-    await advance(assessment, context, userId, { generate: true, signal });
-  }
   return buildView(assessment, context, userId);
 }
 
@@ -404,6 +446,7 @@ export async function answerQuestion(
     topicId: question.topicId,
     selectedOptionId: input.optionId,
     correct,
+    confidence: input.confidence,
     answeredAt: new Date(),
   });
   await TopicMastery.updateOne(
@@ -415,8 +458,8 @@ export async function answerQuestion(
     { upsert: true },
   );
 
-  // Plans only; GET /api/assessments/[id] generates the next question.
-  await advance(assessment, context, userId, { generate: false });
+  // The next question comes from the bank, so the feedback carries it.
+  await advance(assessment, context);
 
   const sources = await Embedding.find({ _id: { $in: question.sourceChunkIds } })
     .select("content lines")
@@ -427,6 +470,10 @@ export async function answerQuestion(
     selectedOptionId: input.optionId,
     correctOptionId: question.correctOptionId,
     explanation: question.explanation,
+    misconception: correct
+      ? null
+      : (question.options.find((option) => option.id === input.optionId)
+          ?.misconception ?? null),
     sourcePages: question.sourcePages ?? [],
     sources: sources.map((chunk) => ({
       id: chunk._id.toString(),

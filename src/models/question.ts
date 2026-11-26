@@ -28,6 +28,11 @@ const questionSchema = new mongoose.Schema(
           _id: false,
           id: { type: String, required: true },
           text: { type: String, required: true },
+          /**
+           * For wrong options: the misconception that leads a student to pick
+           * it, so repeated mistakes can be grouped. Never sent before answering.
+           */
+          misconception: { type: String, default: null },
         },
       ],
       validate: {
@@ -51,6 +56,12 @@ questionSchema.index({ topicId: 1, difficulty: 1 });
 
 export type Question = mongoose.InferSchemaType<typeof questionSchema>;
 export type QuestionDocument = mongoose.HydratedDocument<Question>;
+
+// In development, re-register on hot reload: reusing the cached model keeps
+// the old schema, and mongoose then silently drops newly added fields.
+if (process.env.NODE_ENV !== "production" && mongoose.models.Question) {
+  mongoose.deleteModel("Question");
+}
 
 // Reuse the registered model on hot reload / warm serverless invocations.
 export const Question =

@@ -189,7 +189,7 @@ function GapCard({ gap, view }: { gap: GapAnalysis; view: AssessmentView }) {
           ) : (
             <RotateCwIcon aria-hidden className="size-4" />
           )}
-          {pending ? "Writing your first question..." : `New exam on ${gap.targetLabel}`}
+          {pending ? "Writing your exam, about a minute..." : `New exam on ${gap.targetLabel}`}
         </button>
       )}
     </section>

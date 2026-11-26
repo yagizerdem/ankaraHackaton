@@ -20,6 +20,8 @@ export interface PlanInput {
   /** Direct prerequisites of each topic (edge sources pointing at it). */
   prerequisitesOf: Map<string, string[]>;
   labelOf: (topicId: string) => string;
+  /** Whether the exam's question bank still has a question on the topic. */
+  hasQuestion: (topicId: string) => boolean;
 }
 
 export interface Plan {
@@ -46,6 +48,7 @@ function statsByTopic(answers: AnswerRecord[]) {
  *    A wrong answer never lowers the prerequisites' scores by itself; they
  *    have to be checked with their own questions.
  * 3. Otherwise continue with the queue, and stop when the budget is spent.
+ * Topics without questions left in the bank are skipped.
  */
 export function planNext({
   pending,
@@ -53,6 +56,7 @@ export function planNext({
   questionBudget,
   prerequisitesOf,
   labelOf,
+  hasQuestion,
 }: PlanInput): Plan {
   if (answers.length >= questionBudget) return { pending, next: null };
 
@@ -63,7 +67,7 @@ export function planNext({
   if (last) {
     const lastStats = stats.get(last.topicId)!;
 
-    if (lastStats.total < QUESTIONS_PER_TOPIC) {
+    if (lastStats.total < QUESTIONS_PER_TOPIC && hasQuestion(last.topicId)) {
       return {
         pending: queue,
         next: {
@@ -76,7 +80,7 @@ export function planNext({
     if (lastStats.correct / lastStats.total <= PROBE_PREREQUISITES_AT) {
       const queued = new Set(queue.map((entry) => entry.topicId));
       const probes = (prerequisitesOf.get(last.topicId) ?? [])
-        .filter((id) => !stats.has(id) && !queued.has(id))
+        .filter((id) => !stats.has(id) && !queued.has(id) && hasQuestion(id))
         .map((id) => ({
           topicId: id,
           reason: `Checking ${labelOf(id)}, a prerequisite of ${labelOf(last.topicId)}`,
@@ -85,9 +89,11 @@ export function planNext({
     }
   }
 
-  // Drop topics that already have enough evidence in this exam.
+  // Drop topics with enough evidence in this exam, or no questions left.
   queue = queue.filter(
-    (entry) => (stats.get(entry.topicId)?.total ?? 0) < QUESTIONS_PER_TOPIC,
+    (entry) =>
+      (stats.get(entry.topicId)?.total ?? 0) < QUESTIONS_PER_TOPIC &&
+      hasQuestion(entry.topicId),
   );
 
   return { pending: queue, next: queue[0] ?? null };

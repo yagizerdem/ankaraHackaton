@@ -1,6 +1,9 @@
 import mongoose from "mongoose";
 
 export const ASSESSMENT_STATUSES = ["in_progress", "completed"] as const;
+/** How sure the student said they were, asked before every answer. */
+export const CONFIDENCE_LEVELS = ["sure", "unsure", "guess"] as const;
+export type Confidence = (typeof CONFIDENCE_LEVELS)[number];
 
 const answerSchema = new mongoose.Schema(
   {
@@ -16,6 +19,8 @@ const answerSchema = new mongoose.Schema(
     },
     selectedOptionId: { type: String, required: true },
     correct: { type: Boolean, required: true },
+    /** Missing on answers given before confidence was asked. */
+    confidence: { type: String, enum: CONFIDENCE_LEVELS },
     answeredAt: { type: Date, required: true },
   },
   { _id: false },
@@ -57,6 +62,12 @@ const assessmentSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "TopicNode" },
     ],
     questionBudget: { type: Number, required: true, min: 1, max: 30 },
+    /**
+     * Every question written for this exam, generated in one go at the start.
+     * The adaptive engine only picks from these, so answering never waits on
+     * Gemini.
+     */
+    questionIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Question" }],
     status: {
       type: String,
       enum: ASSESSMENT_STATUSES,
@@ -81,6 +92,12 @@ assessmentSchema.index({ userId: 1, createdAt: -1 });
 
 export type Assessment = mongoose.InferSchemaType<typeof assessmentSchema>;
 export type AssessmentDocument = mongoose.HydratedDocument<Assessment>;
+
+// In development, re-register on hot reload: reusing the cached model keeps
+// the old schema, and mongoose then silently drops newly added fields.
+if (process.env.NODE_ENV !== "production" && mongoose.models.Assessment) {
+  mongoose.deleteModel("Assessment");
+}
 
 // Reuse the registered model on hot reload / warm serverless invocations.
 export const Assessment =

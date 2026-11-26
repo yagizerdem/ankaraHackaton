@@ -49,15 +49,6 @@ export function startExam(body: {
   );
 }
 
-/** Also generates the next question when the exam is waiting for one. */
-export function fetchExam(id: string) {
-  return request<AssessmentView>(
-    `/api/assessments/${encodeURIComponent(id)}`,
-    { cache: "no-store" },
-    "Couldn't load the exam, try again",
-  );
-}
-
 export function submitAnswer(id: string, body: AnswerInput) {
   return request<AnswerFeedback>(
     `/api/assessments/${encodeURIComponent(id)}/answers`,

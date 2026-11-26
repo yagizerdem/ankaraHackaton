@@ -8,12 +8,11 @@ import {
   CheckCircle2Icon,
   CompassIcon,
   LoaderCircleIcon,
-  RotateCwIcon,
   XCircleIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import { fetchExam, submitAnswer } from "@/app/student-panel/assessment/api";
+import { submitAnswer } from "@/app/student-panel/assessment/api";
 import { ExamResults } from "@/app/student-panel/assessment/components/exam-results";
 import { cn } from "@/lib/utils";
 
@@ -22,18 +21,23 @@ import type {
   AssessmentView,
   QuestionView,
 } from "@/domain/assessment";
-import type { ApiResponse } from "@/lib/api-response";
 
 const DIFFICULTY_LABEL = { easy: "Easy", medium: "Medium", hard: "Hard" };
+
+type Confidence = "sure" | "unsure" | "guess";
+
+const CONFIDENCE_OPTIONS: { value: Confidence; label: string }[] = [
+  { value: "sure", label: "Sure" },
+  { value: "unsure", label: "Unsure" },
+  { value: "guess", label: "Guessing" },
+];
 
 export function ExamRunner({ initial }: { initial: AssessmentView }) {
   const [view, setView] = useState(initial);
   const [choice, setChoice] = useState<string | null>(null);
+  const [confidence, setConfidence] = useState<Confidence | null>(null);
   const [feedback, setFeedback] = useState<AnswerFeedback | null>(null);
   const [checking, setChecking] = useState(false);
-  const [loadingNext, setLoadingNext] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const nextExam = useRef<Promise<ApiResponse<AssessmentView>> | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   // Move focus to each new question so keyboard users start at the top.
@@ -42,11 +46,12 @@ export function ExamRunner({ initial }: { initial: AssessmentView }) {
   }, [view.current?.id]);
 
   async function check(question: QuestionView) {
-    if (!choice) return;
+    if (!choice || !confidence) return;
     setChecking(true);
     const response = await submitAnswer(view.id, {
       questionId: question.id,
       optionId: choice as "a" | "b" | "c" | "d",
+      confidence,
     });
     setChecking(false);
 
@@ -55,31 +60,16 @@ export function ExamRunner({ initial }: { initial: AssessmentView }) {
       return;
     }
     setFeedback(response.data);
-    // Write the next question while the student reads the explanation.
-    if (response.data.assessment.status === "in_progress") {
-      nextExam.current = fetchExam(view.id);
-    }
   }
 
-  async function goNext() {
-    if (feedback?.assessment.status === "completed") {
-      setView(feedback.assessment);
-      setFeedback(null);
-      return;
-    }
-    setLoadingNext(true);
-    setLoadError(null);
-    const response = await (nextExam.current ?? fetchExam(view.id));
-    nextExam.current = null;
-    setLoadingNext(false);
-
-    if (!response.isSuccess || !response.data?.current) {
-      setLoadError(response.message ?? "Couldn't prepare the next question");
-      return;
-    }
-    setView(response.data);
+  // The whole exam was written up front, so the feedback already carries the
+  // next question (or the results): no waiting here.
+  function goNext() {
+    if (!feedback) return;
+    setView(feedback.assessment);
     setFeedback(null);
     setChoice(null);
+    setConfidence(null);
   }
 
   if (view.status === "completed" && view.results) {
@@ -122,11 +112,9 @@ export function ExamRunner({ initial }: { initial: AssessmentView }) {
       </div>
 
       {!question ? (
-        <RetryCard
-          message={loadError ?? "The next question isn't ready yet."}
-          pending={loadingNext}
-          onRetry={goNext}
-        />
+        <p role="alert" className="rounded-xl bg-surface-container px-6 py-10 text-center text-body-md text-on-surface">
+          This exam has no question to show. Go back and start a new one.
+        </p>
       ) : (
         <article className="flex flex-col gap-5 rounded-xl bg-surface-container p-4 sm:p-6">
           <header className="flex flex-col gap-2">
@@ -210,46 +198,65 @@ export function ExamRunner({ initial }: { initial: AssessmentView }) {
             })}
           </fieldset>
 
+          {!feedback && (
+            // Asked before checking, so the answer can't sway the rating.
+            <fieldset
+              disabled={checking}
+              className="flex flex-col gap-2 rounded-lg bg-surface-container-high p-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <legend className="contents">
+                <span className="text-label-md text-on-surface">
+                  How sure are you?
+                </span>
+              </legend>
+              <div className="flex gap-2">
+                {CONFIDENCE_OPTIONS.map((option) => (
+                  <label
+                    key={option.value}
+                    className={cn(
+                      "cursor-pointer rounded-full border px-3 py-1 text-label-md transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary",
+                      confidence === option.value
+                        ? "border-primary bg-primary/15 text-on-surface"
+                        : "border-outline-variant text-on-surface-variant hover:bg-surface-container-highest",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="confidence"
+                      value={option.value}
+                      checked={confidence === option.value}
+                      onChange={() => setConfidence(option.value)}
+                      className="sr-only"
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
           <div aria-live="polite">
             {feedback && <FeedbackPanel feedback={feedback} />}
           </div>
-
-          {loadError && feedback && (
-            <p role="alert" className="text-body-sm text-error">
-              {loadError}
-            </p>
-          )}
 
           <div className="flex justify-end">
             {feedback ? (
               <button
                 type="button"
                 onClick={goNext}
-                disabled={loadingNext}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-md text-on-primary transition-colors outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-wait disabled:opacity-80"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-md text-on-primary transition-colors outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
               >
-                {loadingNext ? (
-                  <>
-                    <LoaderCircleIcon aria-hidden className="size-4 animate-spin motion-reduce:animate-none" />
-                    Writing the next question...
-                  </>
-                ) : feedback.assessment.status === "completed" ? (
-                  <>
-                    See results
-                    <ArrowRightIcon aria-hidden className="size-4" />
-                  </>
-                ) : (
-                  <>
-                    {loadError ? "Try again" : "Next question"}
-                    <ArrowRightIcon aria-hidden className="size-4" />
-                  </>
-                )}
+                {feedback.assessment.status === "completed" ? "See results" : "Next question"}
+                <ArrowRightIcon aria-hidden className="size-4" />
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => check(question)}
-                disabled={!choice || checking}
+                disabled={!choice || !confidence || checking}
+                title={
+                  choice && !confidence ? "Say how sure you are first" : undefined
+                }
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-md text-on-primary transition-colors outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {checking && (
@@ -286,6 +293,12 @@ function FeedbackPanel({ feedback }: { feedback: AnswerFeedback }) {
         )}
         {feedback.correct ? "Correct" : "Not quite"}
       </p>
+      {feedback.misconception && (
+        <p className="rounded-md bg-surface-container-high px-3 py-2 text-body-sm text-on-surface">
+          <span className="font-medium">Likely misconception: </span>
+          {feedback.misconception}
+        </p>
+      )}
       <p className="text-body-md text-on-surface">{feedback.explanation}</p>
 
       {(feedback.sources.length > 0 || feedback.sourcePages.length > 0) && (
@@ -310,36 +323,6 @@ function FeedbackPanel({ feedback }: { feedback: AnswerFeedback }) {
           </ul>
         </details>
       )}
-    </div>
-  );
-}
-
-function RetryCard({
-  message,
-  pending,
-  onRetry,
-}: {
-  message: string;
-  pending: boolean;
-  onRetry: () => void;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-xl bg-surface-container px-6 py-10 text-center">
-      <p role="alert" className="text-body-md text-on-surface">
-        {message}
-      </p>
-      <button
-        type="button"
-        onClick={onRetry}
-        disabled={pending}
-        className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-label-md text-on-primary transition-colors outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-wait disabled:opacity-80"
-      >
-        <RotateCwIcon
-          aria-hidden
-          className={cn("size-4", pending && "animate-spin motion-reduce:animate-none")}
-        />
-        {pending ? "Writing the question..." : "Try again"}
-      </button>
     </div>
   );
 }

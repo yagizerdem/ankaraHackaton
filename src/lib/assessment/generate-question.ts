@@ -18,7 +18,18 @@ const generatedSchema = z.object({
         .describe("Number of the topic this question tests"),
       prompt: z.string().min(10).describe("The question, self-contained"),
       options: z
-        .array(z.object({ id: z.enum(OPTION_IDS), text: z.string().min(1) }))
+        .array(
+          z.object({
+            id: z.enum(OPTION_IDS),
+            text: z.string().min(1),
+            misconception: z
+              .string()
+              .nullable()
+              .describe(
+                "For a wrong option: the misconception behind it, copied word for word from the topic's list when one fits, else a short new one. Null for the correct option.",
+              ),
+          }),
+        )
         .length(4)
         .describe("Exactly four options with ids a, b, c, d"),
       correctOptionId: z.enum(OPTION_IDS),
@@ -51,7 +62,7 @@ export interface ExamTopicRequest {
 export interface GeneratedQuestion {
   topicId: string;
   prompt: string;
-  options: { id: string; text: string }[];
+  options: { id: string; text: string; misconception: string | null }[];
   correctOptionId: string;
   explanation: string;
   /** Ids of the retrieved chunks the model said it used. */
@@ -97,6 +108,9 @@ Rules:
 - Exactly four options (a-d) and exactly one correct answer. Wrong options
   should be plausible; base them on the common misconceptions when possible.
 - Vary which letter is correct.
+- For every wrong option, name the misconception that would lead a student
+  to pick it. Reuse the topic's misconception text exactly when it fits, so
+  repeated mistakes can be counted. Use null for the correct option.
 - easy checks recall, medium checks understanding, hard checks application.
 - List the excerpt numbers you relied on in usedSources.
 - Write plain text only: no LaTeX, no Markdown, no dollar signs. Use Unicode
@@ -144,7 +158,16 @@ export async function generateExamQuestions(
     usable.push({
       topicId: topic.topicId,
       prompt: question.prompt,
-      options: [...question.options].sort((a, b) => a.id.localeCompare(b.id)),
+      options: [...question.options]
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .map((option) => ({
+          id: option.id,
+          text: option.text,
+          misconception:
+            option.id === question.correctOptionId
+              ? null
+              : option.misconception?.trim() || null,
+        })),
       correctOptionId: question.correctOptionId,
       explanation: question.explanation,
       sourceChunkIds: question.usedSources
