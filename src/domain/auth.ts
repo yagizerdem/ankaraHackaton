@@ -1,0 +1,34 @@
+import * as z from "zod";
+
+export function createSignInSchema(data: unknown) {
+  const schema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+  });
+  return schema;
+}
+
+export function createSignUpSchema(data: unknown) {
+  const schema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+    username: z.string().min(3),
+    firstName: z.string().min(1).optional(),
+    lastName: z.string().min(1).optional(),
+  });
+  return schema;
+}
+
+export type SignInInput = z.infer<ReturnType<typeof createSignInSchema>>;
+export type SignUpInput = z.infer<ReturnType<typeof createSignUpSchema>>;
+
+export interface SignInResponse {
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    firstName?: string;
+    lastName?: string;
+  };
+  expiresAt: Date;
+}
