@@ -4,6 +4,7 @@ import { Fragment, useRef, useState } from "react";
 import {
   BinaryIcon,
   CheckIcon,
+  CircleAlertIcon,
   CloudUploadIcon,
   FileCheckIcon,
   FilePlusIcon,
@@ -29,6 +30,7 @@ import {
 } from "@/providers/upload-provider";
 import { Button } from "@base-ui/react";
 import { toast } from "sonner";
+import type { FormErrors } from "@/error/app-error";
 
 const STAGES: {
   step: Exclude<UploadStep, "done">;
@@ -73,6 +75,7 @@ export function UploadDialog() {
     currentStep,
     setCurrentStep,
     generateEmbeddings,
+    generateKnowledgeGraph,
   } = useUpload();
   // Position of the running stage; past the last stage once all are done.
   const currentIndex =
@@ -86,6 +89,7 @@ export function UploadDialog() {
   const [pageError, setPageError] = useState<string | null>(null);
   const latestFile = useRef<File | null>(null);
   const [chunkCount, setChunkCount] = useState<number | null>(null);
+  const [formError, setFormError] = useState<FormErrors>({});
 
   async function chooseFile(next: File | undefined) {
     if (!next) return;
@@ -94,6 +98,8 @@ export function UploadDialog() {
     setPageCount(undefined);
     setPageError(null);
     setChunkCount(null);
+    setFormError({});
+    setCurrentStep("upload");
 
     try {
       const { getPageCount } = await import("@/lib/document/page-count");
@@ -116,6 +122,7 @@ export function UploadDialog() {
     setPageCount(undefined);
     setPageError(null);
     setChunkCount(null);
+    setFormError({});
   }
 
   const tooManyPages = pageCount != null && pageCount > MAX_PAGES;
@@ -125,10 +132,12 @@ export function UploadDialog() {
       toast.error("No file selected");
       return;
     }
+    setFormError({});
 
     // 1.  upload the file
     const uploadResponse = await uploadFile(file);
     if (!uploadResponse.isSuccess) {
+      setFormError(uploadResponse.fromErrors ?? {});
       toast.error(uploadResponse.message ?? "Upload failed");
       return;
     }
@@ -151,6 +160,16 @@ export function UploadDialog() {
 
     toast.success("Embeddings generated successfully");
     setCurrentStep("dag");
+
+    // 3. generate the knowledge graph based on the embeddings
+    const graphResponse = await generateKnowledgeGraph(uploadId);
+    if (!graphResponse.isSuccess) {
+      toast.error(graphResponse.message ?? "Knowledge graph generation failed");
+      return;
+    }
+
+    toast.success("Knowledge graph generated successfully");
+    setCurrentStep("done");
   }
 
   return (
@@ -404,6 +423,23 @@ export function UploadDialog() {
             Close
           </DialogClose>
         </footer>
+
+        {Object.keys(formError).length > 0 && (
+          <ul
+            role="alert"
+            className="flex flex-col gap-1 border-t border-error/30 bg-error/10 px-6 py-3"
+          >
+            {Object.entries(formError).map(([field, message]) => (
+              <li
+                key={field}
+                className="flex items-start gap-2 text-body-sm text-error"
+              >
+                <CircleAlertIcon className="mt-0.5 size-4 shrink-0" />
+                <span>{message}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </DialogContent>
     </Dialog>
   );
