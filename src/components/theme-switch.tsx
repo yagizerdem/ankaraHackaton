@@ -31,7 +31,9 @@ export function ThemeSwitch({ className }: { className?: string }) {
   const isDark = useSyncExternalStore(subscribe, getIsDark, getServerIsDark);
 
   const scope = useRef<HTMLButtonElement>(null);
-  const hasAnimated = useRef(false);
+  // Set by a click on this switch. Hydration, the provider resolving
+  // "system", or a theme change from elsewhere only snap to the final state.
+  const animateNext = useRef(false);
 
   useGSAP(
     () => {
@@ -42,9 +44,10 @@ export function ThemeSwitch({ className }: { className?: string }) {
         ? [".theme-moon", ".theme-sun"]
         : [".theme-sun", ".theme-moon"];
 
-      // First paint (and reduced motion): jump to the final state, no tween.
-      if (!hasAnimated.current || reduceMotion) {
-        hasAnimated.current = true;
+      const clicked = animateNext.current;
+      animateNext.current = false;
+
+      if (!clicked || reduceMotion) {
         gsap.set(".theme-knob", { x: isDark ? KNOB_TRAVEL : 0, scaleX: 1 });
         gsap.set(incoming, { autoAlpha: 1, rotate: 0, scale: 1 });
         gsap.set(outgoing, { autoAlpha: 0, rotate: -90, scale: 0.4 });
@@ -105,7 +108,10 @@ export function ThemeSwitch({ className }: { className?: string }) {
       role="switch"
       aria-checked={isDark}
       aria-label="Dark mode"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={() => {
+        animateNext.current = true;
+        setTheme(isDark ? "light" : "dark");
+      }}
       className={cn(
         "cursor-pointer relative inline-flex h-8 w-14 shrink-0 items-center rounded-full border bg-muted p-1 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
         className,
