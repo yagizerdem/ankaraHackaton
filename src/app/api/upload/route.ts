@@ -1,7 +1,9 @@
 import path from "node:path";
-import { connectDB } from "@/lib/db";
+import dbConnect from "@/lib/db";
 import { Document } from "@/models/document";
 import { withErrorHandler } from "@/error/with-error-handler";
+import { ApiResponse } from "@/lib/api-response";
+import HttpStatusCode from "@/lib/http-status-code";
 
 // MongoDB caps a single document at 16MB; leave headroom for the other fields.
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
@@ -13,37 +15,46 @@ export const POST = withErrorHandler(async (request: Request) => {
     formData = await request.formData();
   } catch {
     return Response.json(
-      { error: "Expected multipart/form-data body" },
-      { status: 400 },
+      ApiResponse.badRequest("Expected multipart/form-data body"),
+      { status: HttpStatusCode.BAD_REQUEST },
     );
   }
 
   const file = formData.get("file");
   if (!(file instanceof File)) {
     return Response.json(
-      { error: "`file` field is required" },
-      { status: 400 },
+      ApiResponse.badRequest("Validation failed", {
+        file: "`file` field is required",
+      }),
+      { status: HttpStatusCode.BAD_REQUEST },
     );
   }
   if (file.size === 0) {
-    return Response.json({ error: "File is empty" }, { status: 400 });
+    return Response.json(
+      ApiResponse.badRequest("Validation failed", { file: "File is empty" }),
+      { status: HttpStatusCode.BAD_REQUEST },
+    );
   }
   if (file.size > MAX_FILE_SIZE) {
     return Response.json(
-      { error: `File exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit` },
-      { status: 413 },
+      ApiResponse.payloadTooLarge(
+        `File exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`,
+      ),
+      { status: HttpStatusCode.PAYLOAD_TOO_LARGE },
     );
   }
 
   const extension = path.extname(file.name).replace(/^\./, "");
   if (!extension) {
     return Response.json(
-      { error: "File name must have an extension" },
-      { status: 400 },
+      ApiResponse.badRequest("Validation failed", {
+        file: "File name must have an extension",
+      }),
+      { status: HttpStatusCode.BAD_REQUEST },
     );
   }
 
-  await connectDB();
+  await dbConnect();
   const document = await Document.create({
     name: path.basename(file.name, path.extname(file.name)),
     extension,
@@ -52,14 +63,17 @@ export const POST = withErrorHandler(async (request: Request) => {
   });
 
   return Response.json(
-    {
-      id: document._id,
-      name: document.name,
-      extension: document.extension,
-      mimeType: document.mimeType,
-      size: file.size,
-      createdAt: document.createdAt,
-    },
-    { status: 201 },
+    ApiResponse.created(
+      {
+        id: document._id,
+        name: document.name,
+        extension: document.extension,
+        mimeType: document.mimeType,
+        size: file.size,
+        createdAt: document.createdAt,
+      },
+      "Document uploaded",
+    ),
+    { status: HttpStatusCode.CREATED },
   );
 });

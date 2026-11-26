@@ -1,19 +1,40 @@
+// lib/mongodb.js
 import mongoose from "mongoose";
 
-// Cache the connection promise on globalThis so dev hot-reload and warm
-// serverless invocations reuse one connection instead of opening a new one.
-const globalForMongoose = globalThis as unknown as {
-  mongooseConnection?: Promise<typeof mongoose>;
-};
+const MONGODB_URI = process.env.MONGODB_URI;
 
-export function connectDB() {
-  const uri = process.env.MONGODB_URI;
-  if (!uri) throw new Error("MONGODB_URI is not set");
-
-  globalForMongoose.mongooseConnection ??= mongoose.connect(uri).catch((err) => {
-    // Let the next call retry instead of caching a rejected promise forever.
-    globalForMongoose.mongooseConnection = undefined;
-    throw err;
-  });
-  return globalForMongoose.mongooseConnection;
+if (!MONGODB_URI) {
+  throw new Error("Please define the MONGODB_URI environment variable");
 }
+
+declare global {
+  var mongoose: {
+    conn: typeof import("mongoose") | null;
+    promise: Promise<typeof import("mongoose")> | null;
+  };
+}
+
+/**
+ * Cached connection for MongoDB.
+ */
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function dbConnect() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI!).then((mongoose) => {
+      return mongoose;
+    });
+  }
+  cached.conn = await cached.promise;
+  return cached.conn;
+}
+
+export default dbConnect;
