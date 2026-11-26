@@ -122,7 +122,8 @@ export function UploadsList({ rows }: { rows: UploadRow[] }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl bg-surface-container">
+    // relative: clips the absolutely positioned sr-only header text too.
+    <div className="relative overflow-x-auto rounded-xl bg-surface-container">
       <table className="w-full min-w-[800px] border-collapse text-left">
         <caption className="sr-only">Your uploaded documents</caption>
         <thead>
