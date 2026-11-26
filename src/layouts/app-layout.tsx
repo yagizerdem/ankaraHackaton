@@ -3,10 +3,25 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOutIcon, NetworkIcon, UserIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  ChevronDownIcon,
+  LogOutIcon,
+  MailIcon,
+  NetworkIcon,
+  UserIcon,
+} from "lucide-react";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { AuthUser } from "@/domain/auth";
 import { useAuth } from "@/providers/auth-provider";
 import { ThemeSwitch } from "@/components/theme-switch";
 
@@ -92,15 +107,57 @@ function AuthActions() {
 
   return (
     <>
-      <Link href="/profile" className={buttonVariants({ variant: "ghost" })}>
-        <UserIcon />
-        <span className="max-w-32 truncate">{user.username}</span>
-      </Link>
+      <ProfileMenu user={user} />
       <Button variant="outline" onClick={signOut} disabled={signingOut}>
         <LogOutIcon />
         {signingOut ? "Signing out..." : "Sign out"}
       </Button>
     </>
+  );
+}
+
+function ProfileMenu({ user }: { user: AuthUser }) {
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ");
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={<Button variant="ghost" className="group" />}
+      >
+        <UserIcon />
+        <span className="max-w-32 truncate">{user.username}</span>
+        <ChevronDownIcon className="transition-transform duration-200 group-data-popup-open:rotate-180" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" sideOffset={8} className="w-64">
+        <div className="flex items-center gap-3 px-2 py-2">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground uppercase">
+            {(user.firstName?.[0] ?? user.username[0]) +
+              (user.lastName?.[0] ?? "")}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium">
+              {fullName || user.username}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              @{user.username}
+            </p>
+          </div>
+        </div>
+        <DropdownMenuSeparator />
+        <dl className="flex flex-col gap-2 px-2 py-2 text-sm">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <MailIcon className="size-4 shrink-0" />
+            <dt className="sr-only">Email</dt>
+            <dd className="truncate text-foreground">{user.email}</dd>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <CalendarIcon className="size-4 shrink-0" />
+            <dt className="sr-only">Member since</dt>
+            <dd>Member since {format(new Date(user.createdAt), "PP")}</dd>
+          </div>
+        </dl>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
