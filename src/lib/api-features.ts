@@ -38,7 +38,8 @@ export class ApiFeatures {
       }
       if (!FILTER_OPERATORS.includes(operator)) continue;
 
-      const parsed = operator === "in" || operator === "nin" ? value.split(",") : value;
+      const parsed =
+        operator === "in" || operator === "nin" ? value.split(",") : value;
       const existing = conditions[field];
       conditions[field] = {
         ...(typeof existing === "object" ? existing : {}),
@@ -74,7 +75,9 @@ export class ApiFeatures {
   /** `limit=N`, capped at MAX_LIMIT; defaults to MAX_LIMIT when absent or invalid. */
   limit() {
     const limit = Number.parseInt(this.queryParams.limit, 10);
-    this.query = this.query.limit(limit > 0 ? Math.min(limit, MAX_LIMIT) : MAX_LIMIT);
+    this.query = this.query.limit(
+      limit > 0 ? Math.min(limit, MAX_LIMIT) : MAX_LIMIT,
+    );
     return this;
   }
 }
