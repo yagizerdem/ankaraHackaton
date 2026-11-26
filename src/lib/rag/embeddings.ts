@@ -91,7 +91,10 @@ export async function embedChunks(
 }
 
 /** Embeds a search query in the same space as embedChunks, for retrieval. */
-export async function embedQuery(query: string, options?: Omit<EmbedOptions, "title">) {
+export async function embedQuery(
+  query: string,
+  options?: Omit<EmbedOptions, "title">,
+) {
   const [vector] = await embedTexts([query], "RETRIEVAL_QUERY", options);
   return vector;
 }
