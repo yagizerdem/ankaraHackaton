@@ -25,10 +25,12 @@ import type { ApiResponse } from "@/lib/api-response";
 import { cameraFlashEffect, zodErrorToFromErrors } from "@/lib/utils";
 import { PasswordInput } from "@/app/(auth)/components/password-input";
 import { toast } from "sonner";
+import { useAuth } from "@/providers/auth-provider";
 
 const signInSchema = createSignInSchema(undefined);
 
 export default function SignInPage() {
+  const { setUser } = useAuth();
   const [formErrors, setFormErrors] = useState<FromErrors>({});
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>("");
@@ -62,18 +64,25 @@ export default function SignInPage() {
         body: JSON.stringify(parsed.data),
       });
 
-      console.log(response);
+      const body: ApiResponse<SignInResponse> | null = await response
+        .json()
+        .catch(() => null);
 
       if (response.ok) {
         toast.success("Signed in successfully");
+        setUser({
+          createdAt: body?.data?.user?.createdAt ?? new Date(),
+          email: body?.data?.user?.email ?? "",
+          id: body?.data?.user?.id ?? "",
+          username: body?.data?.user?.username ?? "",
+          firstName: body?.data?.user?.firstName ?? "",
+          lastName: body?.data?.user?.lastName ?? "",
+        });
         router.push("/");
         cameraFlashEffect();
         return;
       }
 
-      const body: ApiResponse<SignInResponse> | null = await response
-        .json()
-        .catch(() => null);
       if (body?.fromErrors) setFormErrors(body.fromErrors);
       setError(body?.message ?? "Something went wrong");
       toast.error(body?.message ?? "Something went wrong");
