@@ -21,6 +21,7 @@ import { zodErrorToFromErrors, getJsonBody } from "@/lib/utils";
 import { Document } from "@/models/document";
 
 import type { EmbeddingResponse } from "@/domain/rag";
+import { Embedding } from "@/models/embedding";
 
 export const POST = withErrorHandler(async (request: Request) => {
   await dbConnect();
@@ -108,7 +109,13 @@ export const POST = withErrorHandler(async (request: Request) => {
     );
   }
 
-  console.log(embeddings);
+  await Embedding.insertMany(
+    embeddings.map((chunk) => ({
+      ...chunk,
+      documentId,
+      userId: user._id,
+    })),
+  );
 
   return Response.json(
     ApiResponse.ok<EmbeddingResponse>(
