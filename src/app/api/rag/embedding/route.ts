@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-import { createEmbeddingSchema } from "@/domain/rag";
+import { createEmbeddingRequestSchema } from "@/domain/rag";
 import { withErrorHandler } from "@/error/with-error-handler";
 import { ApiResponse } from "@/lib/api-response";
 import { SESSION_COOKIE, verifySessionAndGetUser } from "@/lib/auth";
@@ -37,7 +37,7 @@ export const POST = withErrorHandler(async (request: Request) => {
 
   const body = await getJsonBody(request);
 
-  const parsed = createEmbeddingSchema().safeParse(body);
+  const parsed = createEmbeddingRequestSchema().safeParse(body);
   if (!parsed.success) {
     return Response.json(
       ApiResponse.badRequest(

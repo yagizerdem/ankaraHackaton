@@ -1,6 +1,6 @@
 import * as z from "zod";
 
-export function createEmbeddingSchema() {
+export function createEmbeddingRequestSchema() {
   return z.object({
     documentId: z
       .string()
@@ -8,7 +8,9 @@ export function createEmbeddingSchema() {
   });
 }
 
-export type EmbeddingInput = z.infer<ReturnType<typeof createEmbeddingSchema>>;
+export type EmbeddingInput = z.infer<
+  ReturnType<typeof createEmbeddingRequestSchema>
+>;
 
 export interface EmbeddingResponse {
   documentId: string;
