@@ -1,7 +1,34 @@
 import type * as z from "zod";
 import type { FromErrors } from "@/error/app-error";
 
-export { cn } from "cn";
+import { createCn } from "cn/config";
+
+// The Stitch type scale in globals.css adds text-* font sizes that the merger
+// would otherwise read as colors and drop next to text-primary and friends.
+export const cn = createCn({
+  extend: {
+    classGroups: {
+      "font-size": [
+        {
+          text: [
+            "headline-xl",
+            "headline-xl-mobile",
+            "headline-lg",
+            "headline-lg-mobile",
+            "headline-md",
+            "title-md",
+            "body-lg",
+            "body-md",
+            "body-sm",
+            "label-md",
+            "label-sm",
+            "mono-data",
+          ],
+        },
+      ],
+    },
+  },
+});
 
 export function zodErrorToFromErrors(
   error: z.ZodError,
