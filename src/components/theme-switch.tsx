@@ -107,7 +107,7 @@ export function ThemeSwitch({ className }: { className?: string }) {
       aria-label="Dark mode"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className={cn(
-        "relative inline-flex h-8 w-14 shrink-0 items-center rounded-full border bg-muted p-1 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
+        "cursor-pointer relative inline-flex h-8 w-14 shrink-0 items-center rounded-full border bg-muted p-1 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
         className,
       )}
     >
