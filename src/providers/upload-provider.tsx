@@ -4,6 +4,7 @@ import { createContext, useContext, useState } from "react";
 import type { UploadDocumentResponse } from "@/domain/document";
 import type { ApiResponse } from "@/lib/api-response";
 import HttpStatusCode from "@/lib/http-status-code";
+import type { EmbeddingResponse } from "@/domain/rag";
 
 export const UPLOAD_STEPS = ["upload", "chunking", "embedding", "dag"] as const;
 export type UploadStep = (typeof UPLOAD_STEPS)[number] | "done";
@@ -19,6 +20,9 @@ type UploadProviderState = {
   currentStep: UploadStep;
   setCurrentStep: (step: UploadStep) => void;
   uploadFile: (file: File) => Promise<ApiResponse<UploadDocumentResponse>>;
+  generateEmbeddings: (
+    documentId: string,
+  ) => Promise<ApiResponse<EmbeddingResponse>>;
 };
 
 const initialState: UploadProviderState = {
@@ -28,6 +32,9 @@ const initialState: UploadProviderState = {
   currentStep: "upload",
   setCurrentStep: () => null,
   uploadFile: async () => {
+    throw new Error("not implemented");
+  },
+  generateEmbeddings: async () => {
     throw new Error("not implemented");
   },
 };
@@ -72,6 +79,38 @@ export function UploadProvider({ children, ...props }: UploadProviderProps) {
     }
   }
 
+  async function generateEmbeddings(
+    documentId: string,
+  ): Promise<ApiResponse<EmbeddingResponse>> {
+    try {
+      const response = await fetch("/api/rag/embedding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
+      });
+
+      const json = (await response
+        .json()
+        .catch(() => null)) as ApiResponse<EmbeddingResponse> | null;
+
+      return (
+        json ?? {
+          message: "Embedding failed, try again",
+          error: "Embedding failed, try again",
+          httpStatusCode: response.status,
+          isSuccess: false,
+        }
+      );
+    } catch {
+      return {
+        message: "Network error, check your connection",
+        error: "Network error, check your connection",
+        httpStatusCode: HttpStatusCode.SERVICE_UNAVAILABLE,
+        isSuccess: false,
+      };
+    }
+  }
+
   const value = {
     showUploadModal,
     setShowUploadModal,
@@ -79,6 +118,7 @@ export function UploadProvider({ children, ...props }: UploadProviderProps) {
     currentStep,
     setCurrentStep,
     uploadFile,
+    generateEmbeddings,
   };
 
   return (

@@ -72,10 +72,13 @@ export function UploadDialog() {
     uploadFile,
     currentStep,
     setCurrentStep,
+    generateEmbeddings,
   } = useUpload();
   // Position of the running stage; past the last stage once all are done.
   const currentIndex =
-    currentStep === "done" ? UPLOAD_STEPS.length : UPLOAD_STEPS.indexOf(currentStep);
+    currentStep === "done"
+      ? UPLOAD_STEPS.length
+      : UPLOAD_STEPS.indexOf(currentStep);
   const fileInput = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -121,15 +124,28 @@ export function UploadDialog() {
     }
 
     // 1.  upload the file
-    const response = await uploadFile(file);
-    if (!response.isSuccess) {
-      toast.error(response.message ?? "Upload failed");
+    const uploadResponse = await uploadFile(file);
+    if (!uploadResponse.isSuccess) {
+      toast.error(uploadResponse.message ?? "Upload failed");
+      return;
+    }
+    const uploadId = uploadResponse.data?.id;
+    if (!uploadId) {
+      toast.error("Upload failed");
       return;
     }
     toast.success("Upload successful");
-    setCurrentStep("chunking");
 
+    setCurrentStep("chunking");
     // generate embeddings for the uploaded document
+
+    const embeddingResponse = await generateEmbeddings(uploadId);
+    if (!embeddingResponse.isSuccess) {
+      toast.error(embeddingResponse.message ?? "Embedding failed");
+      return;
+    }
+
+    console.log(embeddingResponse);
   }
 
   return (
