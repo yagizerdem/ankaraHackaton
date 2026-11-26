@@ -17,23 +17,13 @@ import {
   type GraphEdge,
   type GraphNode,
   type NodeStatus,
-  type Tone,
 } from "../mockdata";
-import { toneSoft, toneSolid, toneText, toneVar } from "./tones";
 
 // Nodes have a fixed height so edges can attach to their exact borders.
 const NODE_HEIGHT = 76;
 const ZOOM_STEP = 1.2;
 const ZOOM_MIN = 0.6;
 const ZOOM_MAX = 2;
-
-const filterTone: Record<NodeStatus, Tone> = {
-  mastered: "success",
-  review: "warning",
-  bottleneck: "error",
-  unmeasured: "neutral",
-  locked: "neutral",
-};
 
 /** "Locked / No evidence" covers both locked topics and ones with no evidence yet. */
 function matchesFilter(status: NodeStatus, filter: NodeStatus | null) {
@@ -103,7 +93,6 @@ export function KnowledgeGraphPreview({ onStartRoute }: { onStartRoute: () => vo
       <div className="flex flex-wrap items-center gap-1">
         <span className="text-label-sm text-on-surface-variant">Filter:</span>
         {knowledgeGraph.filters.map((chip) => {
-          const tone = filterTone[chip.status];
           const active = filter === chip.status;
           return (
             <button
@@ -113,12 +102,11 @@ export function KnowledgeGraphPreview({ onStartRoute }: { onStartRoute: () => vo
               onClick={() => setFilter(active ? null : chip.status)}
               className={cn(
                 "flex items-center gap-1 rounded-full px-2 py-0.5 text-label-sm transition-colors",
-                toneSoft[tone],
-                toneText[tone],
+                chip.className,
                 active && "ring-1 ring-current",
               )}
             >
-              <span className={cn("size-1.5 rounded-full", toneSolid[tone])} />
+              <span className={cn("size-1.5 rounded-full", chip.dotClassName)} />
               {chip.label}
             </button>
           );
@@ -298,7 +286,6 @@ function edgeGeometry(edge: GraphEdge) {
 
 function GraphEdges() {
   const id = useId();
-  const tones = Array.from(new Set(knowledgeGraph.edges.map((edge) => edge.tone)));
 
   return (
     <svg
@@ -310,10 +297,11 @@ function GraphEdges() {
         <pattern id={`${id}-dots`} width="28" height="28" patternUnits="userSpaceOnUse">
           <circle cx="2" cy="2" r="1" style={{ fill: "var(--primary-fixed-dim)" }} />
         </pattern>
-        {tones.map((tone) => (
+        {knowledgeGraph.edges.map((edge) => (
           <marker
-            key={tone}
-            id={`${id}-arrow-${tone}`}
+            key={`${edge.from}-${edge.to}`}
+            id={`${id}-arrow-${edge.from}-${edge.to}`}
+            className={edge.className}
             viewBox="0 0 10 10"
             refX="8"
             refY="5"
@@ -321,23 +309,22 @@ function GraphEdges() {
             markerHeight="6"
             orient="auto-start-reverse"
           >
-            <path d="M 0 1 L 9 5 L 0 9 z" style={{ fill: toneVar[tone] }} />
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor" />
           </marker>
         ))}
       </defs>
       <rect width="100%" height="100%" fill={`url(#${id}-dots)`} opacity="0.35" />
       {knowledgeGraph.edges.map((edge) => {
         const { d, labelX, labelY, anchor } = edgeGeometry(edge);
-        const color = toneVar[edge.tone];
         return (
-          <g key={`${edge.from}-${edge.to}`}>
+          <g key={`${edge.from}-${edge.to}`} className={edge.className}>
             <path
               d={d}
               fill="none"
-              markerEnd={`url(#${id}-arrow-${edge.tone})`}
+              markerEnd={`url(#${id}-arrow-${edge.from}-${edge.to})`}
               strokeDasharray={edge.dashed ? "4 3" : undefined}
-              strokeWidth={edge.tone === "error" ? 2.5 : 2}
-              style={{ stroke: color }}
+              strokeWidth={edge.critical ? 2.5 : 2}
+              stroke="currentColor"
             />
             {edge.label && (
               <text
@@ -345,8 +332,8 @@ function GraphEdges() {
                 y={labelY}
                 textAnchor={anchor}
                 fontSize="10"
-                fontWeight={edge.tone === "error" ? 600 : 500}
-                style={{ fill: color }}
+                fontWeight={edge.critical ? 600 : 500}
+                fill="currentColor"
               >
                 {edge.label}
               </text>

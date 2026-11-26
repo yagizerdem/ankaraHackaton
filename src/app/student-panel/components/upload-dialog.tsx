@@ -1,6 +1,12 @@
 "use client";
 
-import { CircleCheckIcon, CircleDashedIcon, FilePlusIcon, FileTextIcon, RefreshCwIcon } from "lucide-react";
+import {
+  CircleCheckIcon,
+  CircleDashedIcon,
+  FilePlusIcon,
+  FileTextIcon,
+  RefreshCwIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -10,21 +16,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { pendingUpload } from "../mockdata";
+import { useUpload } from "@/providers/upload-provider";
 
-interface UploadDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
+interface UploadDialogProps {}
 
 const stepStyles = {
   done: { row: "text-success", icon: CircleCheckIcon, iconClass: "" },
-  running: { row: "text-on-surface", icon: RefreshCwIcon, iconClass: "animate-spin text-tertiary motion-reduce:animate-none" },
+  running: {
+    row: "text-on-surface",
+    icon: RefreshCwIcon,
+    iconClass: "animate-spin text-tertiary motion-reduce:animate-none",
+  },
   pending: { row: "text-outline", icon: CircleDashedIcon, iconClass: "" },
 };
 
-export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
+export function UploadDialog({}: UploadDialogProps) {
+  const { showUploadModal, setShowUploadModal } = useUpload();
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={showUploadModal} onOpenChange={setShowUploadModal}>
       <DialogContent className="gap-4 bg-surface-container-low p-6 sm:max-w-2xl">
         <div className="flex items-center gap-1 border-b border-surface-container-highest pb-2">
           <FilePlusIcon className="size-6 shrink-0 text-primary" />
@@ -47,7 +57,8 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
                   {pendingUpload.name}
                 </div>
                 <div className="text-mono-data text-[11px] text-on-surface-variant">
-                  {pendingUpload.pages} Pages • {pendingUpload.size} • {pendingUpload.topic}
+                  {pendingUpload.pages} Pages • {pendingUpload.size} •{" "}
+                  {pendingUpload.topic}
                 </div>
               </div>
             </div>
@@ -61,7 +72,13 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
               const style = stepStyles[step.state];
               const Icon = style.icon;
               return (
-                <li key={step.label} className={cn("flex items-center justify-between gap-2", style.row)}>
+                <li
+                  key={step.label}
+                  className={cn(
+                    "flex items-center justify-between gap-2",
+                    style.row,
+                  )}
+                >
                   <span className="flex items-center gap-1.5">
                     <Icon className={cn("size-4 shrink-0", style.iconClass)} />
                     {step.label}
@@ -82,7 +99,8 @@ export function UploadDialog({ open, onOpenChange }: UploadDialogProps) {
 
         <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
           <span className="text-body-sm text-on-surface-variant">
-            Estimated time left: <strong className="text-on-surface">{pendingUpload.eta}</strong>
+            Estimated time left:{" "}
+            <strong className="text-on-surface">{pendingUpload.eta}</strong>
           </span>
           <div className="flex items-center gap-1">
             <DialogClose className="rounded-lg bg-surface-container px-4 py-1.5 text-label-md text-on-surface transition-colors hover:bg-surface-container-high">

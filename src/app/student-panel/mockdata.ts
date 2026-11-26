@@ -17,8 +17,6 @@ import {
 
 // Everything the student panel renders until the real APIs exist.
 
-export type Tone = "primary" | "success" | "warning" | "error" | "neutral";
-
 export const student = {
   firstName: "Caner",
   fullName: "Caner Öztürk",
@@ -54,10 +52,10 @@ export const welcomeBanner = {
   summary:
     "Using Bayesian inference on Gemini 1.5 Pro, the knowledge graph found 1 critical prerequisite bottleneck. Your path was adjusted automatically.",
   engines: [
-    { label: "Beta-Bernoulli", icon: CpuIcon, tone: "success" },
-    { label: "DAG Verified", icon: GitForkIcon, tone: "primary" },
-    { label: "Vector RAG", icon: DatabaseIcon, tone: "warning" },
-  ] satisfies { label: string; icon: LucideIcon; tone: Tone }[],
+    { label: "Beta-Bernoulli", icon: CpuIcon, iconClassName: "text-success" },
+    { label: "DAG Verified", icon: GitForkIcon, iconClassName: "text-primary" },
+    { label: "Vector RAG", icon: DatabaseIcon, iconClassName: "text-tertiary" },
+  ] satisfies { label: string; icon: LucideIcon; iconClassName: string }[],
 };
 
 export type StatFooter =
@@ -72,7 +70,13 @@ export interface StatCard {
   value: string;
   detail: string;
   icon: LucideIcon;
-  tone: Tone;
+  valueClassName: string;
+  detailClassName: string;
+  iconClassName: string;
+  /** Fill color of the footer progress bar. */
+  barClassName?: string;
+  /** Marks the card as an alert with a tinted corner. */
+  alert?: boolean;
   footer: StatFooter;
 }
 
@@ -83,7 +87,10 @@ export const statCards: StatCard[] = [
     value: "68%",
     detail: "+4.2% last exam",
     icon: TrendingUpIcon,
-    tone: "success",
+    valueClassName: "text-success",
+    detailClassName: "text-success",
+    iconClassName: "bg-success/15 text-success",
+    barClassName: "bg-success",
     footer: { kind: "progress", percent: 68, left: "34 correct / 14 wrong", right: "48 Evidence Points" },
   },
   {
@@ -92,8 +99,11 @@ export const statCards: StatCard[] = [
     value: "1 Block",
     detail: "Root Cause",
     icon: TriangleAlertIcon,
-    tone: "error",
-    footer: { kind: "callout", text: "Limits & Continuity → Blocking Derivatives" },
+    valueClassName: "text-error",
+    detailClassName: "text-error",
+    iconClassName: "bg-error/15 text-error",
+    alert: true,
+    footer: { kind: "callout", text: "Limits & Continuity → Derivatives" },
   },
   {
     id: "documents",
@@ -101,7 +111,10 @@ export const statCards: StatCard[] = [
     value: "3 PDF",
     detail: "142 Pages",
     icon: FileTextIcon,
-    tone: "primary",
+    // The document count is a neutral fact, not a signal, so it stays in ink.
+    valueClassName: "text-on-surface",
+    detailClassName: "text-on-surface-variant",
+    iconClassName: "bg-primary-container/20 text-primary",
     footer: { kind: "split", left: "26 Topic Nodes", right: "38 Semantic Edges" },
   },
   {
@@ -110,7 +123,10 @@ export const statCards: StatCard[] = [
     value: "Step 2/5",
     detail: "40% Done",
     icon: RouteIcon,
-    tone: "warning",
+    valueClassName: "text-tertiary",
+    detailClassName: "text-tertiary",
+    iconClassName: "bg-tertiary/15 text-tertiary",
+    barClassName: "bg-tertiary",
     footer: {
       kind: "progress-caption",
       percent: 40,
@@ -225,7 +241,9 @@ export interface GraphNode {
 export interface GraphEdge {
   from: string;
   to: string;
-  tone: Tone;
+  /** Text color; the edge, arrow and label draw in currentColor. */
+  className: string;
+  critical?: boolean;
   label?: string;
   dashed?: boolean;
 }
@@ -236,11 +254,31 @@ export const knowledgeGraph = {
   title: "Calculus I: Knowledge Graph (DAG) Preview",
   subtitle: "Kahn-verified directed acyclic graph • Live node states",
   filters: [
-    { status: "mastered", label: "Mastered (92%)" },
-    { status: "review", label: "Review (52%)" },
-    { status: "bottleneck", label: "Bottleneck (28%)" },
-    { status: "locked", label: "Locked / No evidence" },
-  ] satisfies { status: NodeStatus; label: string }[],
+    {
+      status: "mastered",
+      label: "Mastered (92%)",
+      className: "bg-success/15 text-success",
+      dotClassName: "bg-success",
+    },
+    {
+      status: "review",
+      label: "Review (52%)",
+      className: "bg-tertiary/15 text-tertiary",
+      dotClassName: "bg-tertiary",
+    },
+    {
+      status: "bottleneck",
+      label: "Bottleneck (28%)",
+      className: "bg-error/15 text-error",
+      dotClassName: "bg-error",
+    },
+    {
+      status: "locked",
+      label: "Locked / No evidence",
+      className: "bg-surface-container-highest text-on-surface-variant",
+      dotClassName: "bg-outline",
+    },
+  ] satisfies { status: NodeStatus; label: string; className: string; dotClassName: string }[],
   nodes: [
     {
       id: "functions",
@@ -299,11 +337,11 @@ export const knowledgeGraph = {
     },
   ] satisfies GraphNode[],
   edges: [
-    { from: "functions", to: "limit", tone: "success", label: "Prerequisite (Required)", dashed: true },
-    { from: "limit", to: "continuity", tone: "warning", label: "Direct Link" },
-    { from: "limit", to: "derivative-rules", tone: "error", label: "Bottleneck Cause" },
-    { from: "continuity", to: "derivative-rules", tone: "neutral", dashed: true },
-    { from: "derivative-rules", to: "chain-rule", tone: "neutral", label: "Locked Branch" },
+    { from: "functions", to: "limit", className: "text-success", label: "Prerequisite (Required)", dashed: true },
+    { from: "limit", to: "continuity", className: "text-tertiary", label: "Direct Link" },
+    { from: "limit", to: "derivative-rules", className: "text-error", critical: true, label: "Bottleneck Cause" },
+    { from: "continuity", to: "derivative-rules", className: "text-outline", dashed: true },
+    { from: "derivative-rules", to: "chain-rule", className: "text-outline", label: "Locked Branch" },
   ] satisfies GraphEdge[],
   diagnosis: {
     title: "Gemini 1.5 Graph Diagnosis",
@@ -324,7 +362,10 @@ export const knowledgeGraph = {
 export interface LearningStep {
   id: string;
   badge: string;
-  tone: Tone;
+  badgeClassName: string;
+  metaClassName: string;
+  /** Shows an alert icon in the badge. */
+  urgent?: boolean;
   meta: string;
   title: string;
   description?: string;
@@ -340,7 +381,9 @@ export const learningPath: { title: string; tag: string; steps: LearningStep[] }
     {
       id: "one-sided-limits",
       badge: "Priority 1 • Weak Prerequisite",
-      tone: "error",
+      badgeClassName: "bg-error/15 text-error",
+      metaClassName: "text-on-surface-variant",
+      urgent: true,
       meta: "Pages 34–39",
       title: "Computing One-Sided Limits and Indeterminate Forms",
       description: "A targeted summary from Calculus Early Transcendentals Ch 2.2.",
@@ -350,7 +393,8 @@ export const learningPath: { title: string; tag: string; steps: LearningStep[] }
     {
       id: "continuity-test",
       badge: "Priority 2 • Missing Evidence",
-      tone: "warning",
+      badgeClassName: "bg-tertiary/15 text-tertiary",
+      metaClassName: "text-tertiary",
       meta: "3 questions needed",
       title: "Definition of Continuity Diagnostic Test",
       description: "Answer 3 diagnostic questions to raise the Bayesian confidence above 85%.",
@@ -360,7 +404,8 @@ export const learningPath: { title: string; tag: string; steps: LearningStep[] }
     {
       id: "derivative-rules",
       badge: "Target Topic • Locked",
-      tone: "neutral",
+      badgeClassName: "bg-surface-container-highest text-on-surface-variant",
+      metaClassName: "text-on-surface-variant",
       meta: "After steps 1 and 2",
       title: "Differentiation Rules and the Tangent Line",
       action: { label: "Reassess", variant: "neutral" },
@@ -392,7 +437,7 @@ export const diagnosticQuestion = {
   explanationTitle: "RAG Hint:",
   explanationBefore: "Factoring gives",
   explanationCode: "(x-2)(x+2)/(x-2) = x+2",
-  explanationMiddle: ", so the limit is 4. But",
+  explanationMiddle: "→ the limit is 4. But",
   explanationCode2: "f(2)",
   explanationAfter: "is undefined, so the function is not continuous there.",
   footnote: "A correct answer adds +1 evidence to the Bayesian graph.",

@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { activeCourse, student, welcomeBanner } from "../mockdata";
-import { toneText } from "./tones";
 
 export function WelcomeBanner() {
   return (
@@ -33,7 +32,7 @@ export function WelcomeBanner() {
                 key={engine.label}
                 className="flex items-center gap-1 rounded-lg bg-surface-container px-2 py-1.5 text-mono-data text-on-surface-variant"
               >
-                <Icon className={cn("size-4", toneText[engine.tone])} />
+                <Icon className={cn("size-4", engine.iconClassName)} />
                 {engine.label}
               </li>
             );

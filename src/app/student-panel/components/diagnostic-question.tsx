@@ -32,7 +32,7 @@ export function DiagnosticQuestion() {
           <p className="text-body-md text-on-surface">
             <span className="text-mono-data font-semibold text-primary">Question {question.number}:</span>{" "}
             {question.promptBefore}{" "}
-            <span className="text-mono-data text-tertiary">{question.promptHighlight}</span>{" "}
+            <span className="text-mono-data text-tertiary">{question.promptHighlight}</span>
             {question.promptAfter}
           </p>
           <span className="shrink-0 rounded bg-surface-container px-1.5 py-0.5 text-mono-data text-[11px] text-on-surface-variant">

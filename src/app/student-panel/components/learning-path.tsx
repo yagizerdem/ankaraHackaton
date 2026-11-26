@@ -1,7 +1,6 @@
 import { BotIcon, CircleAlertIcon, ClipboardCheckIcon, SplitIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { learningPath, type LearningStep } from "../mockdata";
-import { toneSoft, toneText } from "./tones";
 
 export function LearningPath() {
   return (
@@ -48,17 +47,16 @@ function LearningStepCard({ step }: { step: LearningStep }) {
         <span
           className={cn(
             "flex items-center gap-1 rounded-full px-2 py-0.5 text-label-sm",
-            toneSoft[step.tone],
-            toneText[step.tone],
+            step.badgeClassName,
           )}
         >
-          {step.tone === "error" && <CircleAlertIcon className="size-3" />}
+          {step.urgent && <CircleAlertIcon className="size-3" />}
           {step.badge}
         </span>
         <span
           className={cn(
             "shrink-0 text-mono-data text-[11px]",
-            step.tone === "warning" ? "text-tertiary" : "text-on-surface-variant",
+            step.metaClassName,
           )}
         >
           {step.meta}

@@ -1,11 +1,12 @@
 import { BellIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { notifications } from "../mockdata";
+import { useUpload } from "@/providers/upload-provider";
 
-interface PanelToolbarProps {
-  onUploadClick: () => void;
-}
+interface PanelToolbarProps {}
 
-export function PanelToolbar({ onUploadClick }: PanelToolbarProps) {
+export function PanelToolbar({}: PanelToolbarProps) {
+  const { setShowUploadModal } = useUpload();
+
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
       <label className="relative w-full max-w-md">
@@ -30,7 +31,7 @@ export function PanelToolbar({ onUploadClick }: PanelToolbarProps) {
         </button>
         <button
           type="button"
-          onClick={onUploadClick}
+          onClick={() => setShowUploadModal(true)}
           className="flex items-center gap-1 rounded-lg bg-primary px-4 py-1.5 text-label-md text-on-primary shadow-sm transition-colors hover:bg-primary/90"
         >
           <PlusIcon className="size-4" />

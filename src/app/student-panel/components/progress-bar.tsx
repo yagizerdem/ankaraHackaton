@@ -1,16 +1,15 @@
 import { cn } from "@/lib/utils";
-import type { Tone } from "../mockdata";
-import { toneSolid } from "./tones";
 
 interface ProgressBarProps {
   percent: number;
-  tone: Tone;
+  /** Fill color of the bar, e.g. "bg-success". */
+  barClassName?: string;
   size?: "sm" | "md";
   pulse?: boolean;
   label?: string;
 }
 
-export function ProgressBar({ percent, tone, size = "md", pulse, label }: ProgressBarProps) {
+export function ProgressBar({ percent, barClassName, size = "md", pulse, label }: ProgressBarProps) {
   return (
     <div
       role="progressbar"
@@ -26,7 +25,7 @@ export function ProgressBar({ percent, tone, size = "md", pulse, label }: Progre
       <div
         className={cn(
           "h-full rounded-full transition-all duration-700",
-          toneSolid[tone],
+          barClassName,
           pulse && "animate-pulse motion-reduce:animate-none",
         )}
         style={{ width: `${percent}%` }}

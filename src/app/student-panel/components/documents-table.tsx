@@ -83,11 +83,11 @@ function StatusCell({ status }: { status: DocumentStatus }) {
         <div className="flex w-48 flex-col gap-1">
           <div className="flex items-center justify-between gap-2 text-mono-data text-[11px] text-tertiary">
             <span>{status.label}</span>
-            <span>%{status.percent}</span>
+            <span>{status.percent}%</span>
           </div>
           <ProgressBar
             percent={status.percent}
-            tone="warning"
+            barClassName="bg-tertiary"
             size="sm"
             pulse
             label={status.label}
