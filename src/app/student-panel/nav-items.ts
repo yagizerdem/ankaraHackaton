@@ -1,5 +1,6 @@
 import {
   ClipboardCheckIcon,
+  FileQuestionIcon,
   FileUpIcon,
   LayoutDashboardIcon,
   NetworkIcon,
@@ -20,5 +21,6 @@ export const navItems: NavItem[] = [
   { id: "documents", label: "Documents & Upload", href: "/student-panel/uploads", icon: FileUpIcon },
   { id: "graph", label: "Knowledge Graph", href: "/student-panel/knowledge-graph", icon: NetworkIcon },
   { id: "assessment", label: "Adaptive Exam & Assessment", href: "/student-panel/assessment", icon: ClipboardCheckIcon },
+  { id: "custom-exams", label: "Custom Exams", href: "/student-panel/custom-exams", icon: FileQuestionIcon },
   { id: "path", label: "Personal Learning Path", href: "/student-panel/learning-path", icon: RouteIcon },
 ];
