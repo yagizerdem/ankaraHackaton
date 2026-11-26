@@ -1,14 +1,5 @@
 import mongoose from "mongoose";
 
-export interface Document {
-  name: string;
-  extension: string;
-  mimeType: string;
-  content: Buffer;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 const documentSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -18,6 +9,9 @@ const documentSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
+
+export type Document = mongoose.InferSchemaType<typeof documentSchema>;
+export type DocumentDocument = mongoose.HydratedDocument<Document>;
 
 // Reuse the registered model on hot reload / warm serverless invocations.
 export const Document =

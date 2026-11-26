@@ -1,25 +1,5 @@
 import mongoose from "mongoose";
 
-export interface KnowledgeGraph {
-  documentId: mongoose.Types.ObjectId;
-  nodes: TopicNode[];
-  edges: TopicEdge[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface TopicNode {
-  id: string;
-  label: string;
-  description: string;
-  sourcePages: number[];
-}
-
-export interface TopicEdge {
-  source: string;
-  target: string;
-}
-
 const knowledgeGraphSchema = new mongoose.Schema(
   {
     documentId: { type: mongoose.Schema.Types.ObjectId, required: true },
@@ -46,15 +26,25 @@ const topicEdgeSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-// Dev hot-reload / serverless re-evaluation re-runs this module while
-// mongoose.models persists, and mongoose.model() throws OverwriteModelError
-// on a second registration. Reuse the registered model when present.
+export type KnowledgeGraph = mongoose.InferSchemaType<
+  typeof knowledgeGraphSchema
+>;
+export type KnowledgeGraphDocument = mongoose.HydratedDocument<KnowledgeGraph>;
+
+export type TopicNode = mongoose.InferSchemaType<typeof topicNodeSchema>;
+export type TopicNodeDocument = mongoose.HydratedDocument<TopicNode>;
+
+export type TopicEdge = mongoose.InferSchemaType<typeof topicEdgeSchema>;
+export type TopicEdgeDocument = mongoose.HydratedDocument<TopicEdge>;
+
 export const KnowledgeGraph =
-  mongoose.models.KnowledgeGraph ||
-  mongoose.model("KnowledgeGraph", knowledgeGraphSchema);
+  (mongoose.models.KnowledgeGraph as mongoose.Model<KnowledgeGraph>) ||
+  mongoose.model<KnowledgeGraph>("KnowledgeGraph", knowledgeGraphSchema);
 
 export const TopicNode =
-  mongoose.models.TopicNode || mongoose.model("TopicNode", topicNodeSchema);
+  (mongoose.models.TopicNode as mongoose.Model<TopicNode>) ||
+  mongoose.model<TopicNode>("TopicNode", topicNodeSchema);
 
 export const TopicEdge =
-  mongoose.models.TopicEdge || mongoose.model("TopicEdge", topicEdgeSchema);
+  (mongoose.models.TopicEdge as mongoose.Model<TopicEdge>) ||
+  mongoose.model<TopicEdge>("TopicEdge", topicEdgeSchema);
