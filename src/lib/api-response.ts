@@ -1,9 +1,9 @@
-import { FromErrors } from "@/error/app-error";
+import { FormErrors, AppError } from "@/error/app-error";
 import HttpStatusCode from "@/lib/http-status-code";
 
 export class ApiResponse<T> {
   public message: string;
-  public fromErrors?: FromErrors;
+  public fromErrors?: FormErrors;
   public httpStatusCode: HttpStatusCode;
   public isSuccess: boolean;
   public data?: T;
@@ -32,7 +32,7 @@ export class ApiResponse<T> {
     isSuccess: boolean;
     data?: T;
     error?: string;
-    fromErrors?: FromErrors;
+    fromErrors?: FormErrors;
   }) {
     const response = new ApiResponse<T>(message, httpStatusCode, isSuccess);
     response.data = data;
@@ -53,8 +53,8 @@ export class ApiResponse<T> {
     return response;
   }
 
-  static badRequest(message = "Bad request", fromErrors?: FromErrors) {
-    return ApiResponse.failure(message, HttpStatusCode.BAD_REQUEST, fromErrors);
+  static badRequest(message = "Bad request", formErrors?: FormErrors) {
+    return ApiResponse.failure(message, HttpStatusCode.BAD_REQUEST, formErrors);
   }
 
   static unauthorized(message = "Unauthorized") {
@@ -83,12 +83,12 @@ export class ApiResponse<T> {
 
   static unprocessableEntity(
     message = "Validation failed",
-    fromErrors?: FromErrors,
+    formErrors?: FormErrors,
   ) {
     return ApiResponse.failure(
       message,
       HttpStatusCode.UNPROCESSABLE_ENTITY,
-      fromErrors,
+      formErrors,
     );
   }
 
@@ -108,11 +108,11 @@ export class ApiResponse<T> {
   static failure(
     message: string,
     httpStatusCode: HttpStatusCode,
-    fromErrors?: FromErrors,
+    formErrors?: FormErrors,
   ) {
     const response = new ApiResponse<never>(message, httpStatusCode, false);
     response.error = message;
-    response.fromErrors = fromErrors;
+    response.fromErrors = formErrors;
     return response;
   }
 }

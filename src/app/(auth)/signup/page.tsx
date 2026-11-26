@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { createSignUpFormSchema, type SignUpResponse } from "@/domain/auth";
-import type { FromErrors } from "@/error/app-error";
+import type { FormErrors } from "@/error/app-error";
 import type { ApiResponse } from "@/lib/api-response";
 import { cameraFlashEffect, zodErrorToFromErrors } from "@/lib/utils";
 import { PasswordInput } from "@/app/(auth)/components/password-input";
@@ -64,7 +64,7 @@ const fields = [
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [formErrors, setFormErrors] = useState<FromErrors>({});
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>("");
 

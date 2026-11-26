@@ -4,7 +4,7 @@ import { AppError } from "@/error/app-error";
 import HttpStatusCode from "@/lib/http-status-code";
 
 import type * as z from "zod";
-import type { FromErrors } from "@/error/app-error";
+import type { FormErrors } from "@/error/app-error";
 
 // The Stitch type scale in globals.css adds text-* font sizes that the merger
 // would otherwise read as colors and drop next to text-primary and friends.
@@ -36,8 +36,8 @@ export const cn = createCn({
 export function zodErrorToFromErrors(
   error: z.ZodError,
   rootKey = "body",
-): FromErrors {
-  const fromErrors: FromErrors = {};
+): FormErrors {
+  const fromErrors: FormErrors = {};
   for (const issue of error.issues) {
     const field = issue.path.map(String).join(".") || rootKey;
     fromErrors[field] ??= issue.message;
