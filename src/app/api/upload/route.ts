@@ -1,12 +1,13 @@
 import path from "node:path";
 import { connectDB } from "@/lib/db";
 import { Document } from "@/models/document";
+import { withErrorHandler } from "@/error/with-error-handler";
 
 // MongoDB caps a single document at 16MB; leave headroom for the other fields.
 const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
 /** multipart/form-data with the file under the `file` field. */
-export async function POST(request: Request) {
+export const POST = withErrorHandler(async (request: Request) => {
   let formData: FormData;
   try {
     formData = await request.formData();
@@ -61,4 +62,4 @@ export async function POST(request: Request) {
     },
     { status: 201 },
   );
-}
+});
