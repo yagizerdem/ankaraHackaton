@@ -1,18 +1,56 @@
-import type * as z from "zod";
-import type { FromErrors } from "@/error/app-error";
+import { createCn } from "cn/config";
 
-export { cn } from "cn";
+import { AppError } from "@/error/app-error";
+import HttpStatusCode from "@/lib/http-status-code";
+
+import type * as z from "zod";
+import type { FormErrors } from "@/error/app-error";
+
+// The Stitch type scale in globals.css adds text-* font sizes that the merger
+// would otherwise read as colors and drop next to text-primary and friends.
+export const cn = createCn({
+  extend: {
+    classGroups: {
+      "font-size": [
+        {
+          text: [
+            "headline-xl",
+            "headline-xl-mobile",
+            "headline-lg",
+            "headline-lg-mobile",
+            "headline-md",
+            "title-md",
+            "body-lg",
+            "body-md",
+            "body-sm",
+            "label-md",
+            "label-sm",
+            "mono-data",
+          ],
+        },
+      ],
+    },
+  },
+});
 
 export function zodErrorToFromErrors(
   error: z.ZodError,
   rootKey = "body",
-): FromErrors {
-  const fromErrors: FromErrors = {};
+): FormErrors {
+  const fromErrors: FormErrors = {};
   for (const issue of error.issues) {
     const field = issue.path.map(String).join(".") || rootKey;
     fromErrors[field] ??= issue.message;
   }
   return fromErrors;
+}
+
+export async function getJsonBody(request: Request): Promise<unknown> {
+  try {
+    return await request.json();
+  } catch {
+    throw new AppError("Expected a JSON body", HttpStatusCode.BAD_REQUEST);
+  }
 }
 
 interface CameraFlashOptions {

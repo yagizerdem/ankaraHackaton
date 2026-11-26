@@ -1,0 +1,26 @@
+import { cookies } from "next/headers";
+
+import { AppError } from "@/error/app-error";
+import { withErrorHandler } from "@/error/with-error-handler";
+import { getAssessment } from "@/lib/assessment/service";
+import { ApiResponse } from "@/lib/api-response";
+import { SESSION_COOKIE, verifySessionAndGetUser } from "@/lib/auth";
+import dbConnect from "@/lib/db";
+import HttpStatusCode from "@/lib/http-status-code";
+
+/** The exam's current question, or its results once finished. */
+export const GET = withErrorHandler(
+  async (_request: Request, context: RouteContext<"/api/assessments/[id]">) => {
+    const { id } = await context.params;
+
+    await dbConnect();
+    const user = await verifySessionAndGetUser(
+      (await cookies()).get(SESSION_COOKIE)?.value,
+    );
+    if (!user) throw new AppError("Sign in required", HttpStatusCode.UNAUTHORIZED);
+
+    return Response.json(ApiResponse.ok(await getAssessment(id, user._id)), {
+      status: HttpStatusCode.OK,
+    });
+  },
+);

@@ -11,6 +11,7 @@ const documentSchema = new mongoose.Schema(
     extension: { type: String, required: true, lowercase: true, trim: true },
     mimeType: { type: String, required: true, trim: true },
     content: { type: Buffer, required: true },
+    pageCount: { type: Number, required: false },
   },
   { timestamps: true },
 );

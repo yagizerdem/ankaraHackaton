@@ -11,17 +11,59 @@ const knowledgeGraphSchema = new mongoose.Schema(
 
 const topicNodeSchema = new mongoose.Schema(
   {
-    label: { type: String, required: true },
-    description: { type: String, required: true },
-    sourcePages: [{ type: Number, required: true }],
+    graphId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "KnowledgeGraph",
+      required: true,
+      index: true,
+    },
+    label: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    summary: String,
+    keywords: [String],
+    learningObjectives: [String],
+    misconceptions: [String],
+    difficulty: {
+      type: String,
+      enum: ["beginner", "intermediate", "advanced", "expert"],
+      required: true,
+    },
+    estimatedStudyMinutes: Number,
+    sourcePages: [Number],
+    sourceChunkIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Embedding",
+      },
+    ],
+    importance: {
+      type: Number,
+      min: 0,
+      max: 1,
+      default: 0.5,
+    },
   },
   { timestamps: true },
 );
 
 const topicEdgeSchema = new mongoose.Schema(
   {
-    source: { type: String, required: true },
-    target: { type: String, required: true },
+    source: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TopicNode",
+      required: true,
+    },
+    target: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TopicNode",
+      required: true,
+    },
   },
   { timestamps: true },
 );

@@ -39,7 +39,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  /* Stitch tokens; only defined under .dark (see below). */
+  /* Stitch tokens, defined for both themes below. */
+  --color-success: var(--success);
   --color-surface: var(--surface);
   --color-surface-dim: var(--surface-dim);
   --color-surface-bright: var(--surface-bright);
@@ -84,6 +85,55 @@
   --color-on-tertiary-fixed-variant: var(--on-tertiary-fixed-variant);
   --color-on-background: var(--on-background);
   --color-surface-variant: var(--surface-variant);
+  /* Stitch type scale (DESIGN-*.md). */
+  --text-headline-xl: 36px;
+  --text-headline-xl--line-height: 44px;
+  --text-headline-xl--letter-spacing: -0.025em;
+  --text-headline-xl--font-weight: 700;
+  --text-headline-lg: 28px;
+  --text-headline-lg--line-height: 36px;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 600;
+  --text-headline-xl-mobile: 28px;
+  --text-headline-xl-mobile--line-height: 36px;
+  --text-headline-xl-mobile--letter-spacing: -0.02em;
+  --text-headline-xl-mobile--font-weight: 700;
+  --text-headline-lg-mobile: 22px;
+  --text-headline-lg-mobile--line-height: 30px;
+  --text-headline-lg-mobile--letter-spacing: -0.015em;
+  --text-headline-lg-mobile--font-weight: 600;
+  --text-headline-md: 20px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--letter-spacing: -0.015em;
+  --text-headline-md--font-weight: 600;
+  --text-title-md: 16px;
+  --text-title-md--line-height: 24px;
+  --text-title-md--letter-spacing: -0.01em;
+  --text-title-md--font-weight: 600;
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--letter-spacing: 0em;
+  --text-body-lg--font-weight: 400;
+  --text-body-md: 14px;
+  --text-body-md--line-height: 20px;
+  --text-body-md--letter-spacing: 0em;
+  --text-body-md--font-weight: 400;
+  --text-body-sm: 12px;
+  --text-body-sm--line-height: 18px;
+  --text-body-sm--letter-spacing: 0.01em;
+  --text-body-sm--font-weight: 400;
+  --text-label-md: 13px;
+  --text-label-md--line-height: 16px;
+  --text-label-md--letter-spacing: 0.01em;
+  --text-label-md--font-weight: 500;
+  --text-label-sm: 11px;
+  --text-label-sm--line-height: 14px;
+  --text-label-sm--letter-spacing: 0.04em;
+  --text-label-sm--font-weight: 600;
+  --text-mono-data: 12px;
+  --text-mono-data--line-height: 16px;
+  --text-mono-data--letter-spacing: 0em;
+  --text-mono-data--font-weight: 500;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -94,38 +144,91 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* Google Stitch "Obsidian Knowledge Engine" palette, see DESIGN-light.md. */
+  --background: #faf8ff; /* background / surface */
+  --foreground: #131b2e; /* on-background */
+  --card: #ffffff; /* surface-container-lowest */
+  --card-foreground: #131b2e; /* on-surface */
+  --popover: #ffffff; /* surface-container-lowest */
+  --popover-foreground: #131b2e; /* on-surface */
+  --primary: #4648d4; /* primary */
+  --primary-foreground: #ffffff; /* on-primary */
+  --secondary: #e2e7ff; /* surface-container-high */
+  --secondary-foreground: #131b2e; /* on-surface */
+  --muted: #f2f3ff; /* surface-container-low */
+  --muted-foreground: #464554; /* on-surface-variant */
+  --accent: #eaedff; /* surface-container */
+  --accent-foreground: #131b2e; /* on-surface */
+  --destructive: #ba1a1a; /* error */
+  --border: #c7c4d7; /* outline-variant */
+  --input: #c7c4d7; /* outline-variant */
+  --ring: #6063ee; /* primary-container */
+  --chart-1: #4648d4; /* primary */
+  --chart-2: #006c49; /* secondary */
+  --chart-3: #825100; /* tertiary */
+  --chart-4: #6063ee; /* primary-container */
+  --chart-5: #ba1a1a; /* error */
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #f2f3ff; /* surface-container-low */
+  --sidebar-foreground: #131b2e; /* on-surface */
+  --sidebar-primary: #4648d4; /* primary */
+  --sidebar-primary-foreground: #ffffff; /* on-primary */
+  --sidebar-accent: #e2e7ff; /* surface-container-high */
+  --sidebar-accent-foreground: #131b2e; /* on-surface */
+  --sidebar-border: #c7c4d7; /* outline-variant */
+  --sidebar-ring: #6063ee; /* primary-container */
+
+  /*
+   * Stitch's "secondary" is a green success color, which clashes with the
+   * neutral shadcn secondary above, so it is exposed as success instead.
+   */
+  --success: #006c49;
+
+  /* The full Stitch token set, so markup exported from Stitch works as is. */
+  --surface: #faf8ff;
+  --surface-dim: #d2d9f4;
+  --surface-bright: #faf8ff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f2f3ff;
+  --surface-container: #eaedff;
+  --surface-container-high: #e2e7ff;
+  --surface-container-highest: #dae2fd;
+  --on-surface: #131b2e;
+  --on-surface-variant: #464554;
+  --inverse-surface: #283044;
+  --inverse-on-surface: #eef0ff;
+  --outline: #767586;
+  --outline-variant: #c7c4d7;
+  --surface-tint: #494bd6;
+  --on-primary: #ffffff;
+  --primary-container: #6063ee;
+  --on-primary-container: #fffbff;
+  --inverse-primary: #c0c1ff;
+  --on-secondary: #ffffff;
+  --secondary-container: #6cf8bb;
+  --on-secondary-container: #00714d;
+  --tertiary: #825100;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #a36700;
+  --on-tertiary-container: #fffbff;
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+  --primary-fixed: #e1e0ff;
+  --primary-fixed-dim: #c0c1ff;
+  --on-primary-fixed: #07006c;
+  --on-primary-fixed-variant: #2f2ebe;
+  --secondary-fixed: #6ffbbe;
+  --secondary-fixed-dim: #4edea3;
+  --on-secondary-fixed: #002113;
+  --on-secondary-fixed-variant: #005236;
+  --tertiary-fixed: #ffddb8;
+  --tertiary-fixed-dim: #ffb95f;
+  --on-tertiary-fixed: #2a1700;
+  --on-tertiary-fixed-variant: #653e00;
+  --on-background: #131b2e;
+  --surface-variant: #dae2fd;
 }
 
 .dark {
@@ -165,9 +268,10 @@
   /*
    * The full Stitch token set, so markup exported from Stitch
    * (bg-surface-container, text-on-surface-variant, ...) works as is.
-   * primary, secondary and background map to the shadcn tokens above;
-   * Stitch's secondary green is secondary-fixed-dim.
+   * primary and background map to the shadcn tokens above; Stitch's
+   * secondary green is success (see :root).
    */
+  --success: #4edea3;
   --surface: #0b1326;
   --surface-dim: #0b1326;
   --surface-bright: #31394d;

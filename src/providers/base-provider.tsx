@@ -4,6 +4,8 @@ import { createContext, useContext } from "react";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "./auth-provider";
+import { QueryProvider } from "./query-provider";
+import { UploadProvider } from "./upload-provider";
 
 type BaseProviderProps = {
   children: React.ReactNode;
@@ -20,13 +22,17 @@ export function BaseProvider({ children, ...props }: BaseProviderProps) {
 
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <TooltipProvider>
-          <BaseProviderContext.Provider {...props} value={value}>
-            {children}
-          </BaseProviderContext.Provider>
-        </TooltipProvider>
-      </AuthProvider>
+      <QueryProvider>
+        <AuthProvider>
+          <UploadProvider>
+            <TooltipProvider>
+              <BaseProviderContext.Provider {...props} value={value}>
+                {children}
+              </BaseProviderContext.Provider>
+            </TooltipProvider>
+          </UploadProvider>
+        </AuthProvider>
+      </QueryProvider>
     </ThemeProvider>
   );
 }

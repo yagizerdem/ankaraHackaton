@@ -1,17 +1,17 @@
-export interface FromErrors {
+export interface FormErrors {
   [key: string]: string;
 }
 
 export class AppError extends Error {
   public httpStatusCode: number;
   public isOperational: boolean;
-  public fromErrors?: FromErrors;
+  public fromErrors?: FormErrors;
 
   constructor(
     message: string,
     httpStatusCode: number,
     isOperational = true,
-    fromErrors?: FromErrors,
+    fromErrors?: FormErrors,
   ) {
     super(message);
     this.httpStatusCode = httpStatusCode;

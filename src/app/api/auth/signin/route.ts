@@ -7,18 +7,11 @@ import { hashPassword, verifyPassword } from "@/lib/auth";
 import { createSession } from "@/lib/auth";
 import { User } from "@/models/user";
 import { SessionDocument } from "@/models/session";
-import { zodErrorToFromErrors } from "@/lib/utils";
+import { zodErrorToFromErrors, getJsonBody } from "@/lib/utils";
 
 /** JSON body `{ email, password }`; sets the session cookie on success. */
 export const POST = withErrorHandler(async (request: Request) => {
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json(ApiResponse.badRequest("Expected a JSON body"), {
-      status: HttpStatusCode.BAD_REQUEST,
-    });
-  }
+  const body = await getJsonBody(request);
 
   const parsed = createSignInSchema(body).safeParse(body);
   if (!parsed.success) {
