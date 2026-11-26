@@ -11,6 +11,7 @@ import {
   MASTERY_STYLES,
   formatPercent,
 } from "@/app/student-panel/assessment/mastery-styles";
+import { CalibrationCard } from "@/app/student-panel/learning-path/components/calibration-card";
 import { cn } from "@/lib/utils";
 
 import type { AssessmentView, GapAnalysis } from "@/domain/assessment";
@@ -81,7 +82,15 @@ export function ExamResults({ view }: { view: AssessmentView }) {
         </ul>
       </section>
 
-      <div className="flex justify-end">
+      <CalibrationCard calibration={results.calibration} title="Confidence in this exam" />
+
+      <div className="flex flex-wrap justify-end gap-2">
+        <Link
+          href={`/student-panel/learning-path?graph=${view.graphId}`}
+          className="rounded-lg bg-primary px-4 py-2 text-label-md text-on-primary transition-colors outline-none hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+        >
+          See my learning path
+        </Link>
         <Link
           href="/student-panel/assessment"
           className="rounded-lg border border-outline-variant px-4 py-2 text-label-md text-on-surface transition-colors outline-none hover:bg-surface-container-high focus-visible:ring-2 focus-visible:ring-primary"
