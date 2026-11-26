@@ -53,10 +53,6 @@ function AppHeader() {
             </span>
             <span className="hidden sm:inline">{APP_NAME}</span>
           </Link>
-          <Link href="/" className="flex items-center gap-2 ">
-            <LayoutDashboardIcon className="size-4" />
-            <span className="hidden sm:inline">Student Panel</span>
-          </Link>
         </div>
         <nav className="flex items-center gap-2">
           <ThemeSwitch />
