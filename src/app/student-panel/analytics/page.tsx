@@ -8,7 +8,7 @@ export default function AnalyticsPage() {
       title="Teacher and class analytics"
       description="How a whole class is doing on each topic."
       icon={ChartColumnIcon}
-      plan="Teachers will see mastery across the class, the topics most students struggle with, and which prerequisites cause the most gaps."
+      plan="Class-wide analytics are coming. For now, students can share a read-only report with “Show my teacher” on their learning path, and the link opens here."
     />
   );
 }
