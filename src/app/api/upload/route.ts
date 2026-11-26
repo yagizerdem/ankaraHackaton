@@ -108,6 +108,7 @@ export const POST = withErrorHandler(async (request: Request) => {
     mimeType: file.type || "application/octet-stream",
     content,
     pageCount,
+    userId: user._id,
   });
 
   return Response.json(
