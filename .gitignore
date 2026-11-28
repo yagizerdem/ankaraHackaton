@@ -1,0 +1,47 @@
+# --- Node.js & Next.js ---
+node_modules/
+.next/
+out/
+build/
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+
+# --- Environment Variables & Secrets ---
+.env
+.env*.local
+
+# --- Python & Virtual Environments ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.ipynb_checkpoints/
+
+# --- Flask Sessions & Local Databases ---
+flask_session/
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Large Media, Reference Books & Pipeline Outputs ---
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.pdf
+src/app/api/pipeline/pipeline/result/*
+!src/app/api/pipeline/pipeline/result/.gitkeep
+
+# --- Logs, OS & IDEs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/src/app/api/pipeline/pipeline/resources/

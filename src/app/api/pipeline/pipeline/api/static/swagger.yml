@@ -1,0 +1,255 @@
+openapi: 3.0.4
+info:
+  title: GAN/RAG Learning Pipeline API
+  description: API for uploading, modifying, and evaluating GAN and RAG model transcripts/references.
+  version: 0.1.9
+
+servers:
+  - url: http://api.example.com/v1
+    description: Main (production) server
+  - url: http://staging-api.example.com
+    description: Internal staging server for testing
+
+paths:
+  /api/v1/upload/gan:
+    get:
+      summary: Extract video transcript.
+      description: Analyse and extract a video's transcript for GAN processing.
+      responses:
+        "200":
+          description: Transcript extracted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Extracting video transcript"
+
+  /api/v1/upload/gan/{gan_id}:
+    post:
+      summary: Modify current video transcript.
+      parameters:
+        - name: gan_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Transcript modified successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Modify video transcript"
+        "400":
+          description: Bad request, invalid gan_id or payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid request."
+    put:
+      summary: Replace video transcript.
+      parameters:
+        - name: gan_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Transcript changed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Change Video Transcript"
+        "400":
+          description: Bad request, invalid gan_id or payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid request."
+
+  /api/v1/evaluate/gan:
+    get:
+      summary: Show GAN evaluation.
+      responses:
+        "200":
+          description: GAN evaluation retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Show GAN Evaluation"
+
+  /api/v1/evaluate/gan/{gan_id}:
+    post:
+      summary: Transfer GAN output.
+      parameters:
+        - name: gan_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: GAN output transferred successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Transfer GAN Output"
+        "400":
+          description: Bad request, invalid gan_id or payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid request."
+
+  /api/v1/upload/rag:
+    get:
+      summary: Analyse references.
+      responses:
+        "200":
+          description: References analysed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Analyse References"
+
+  /api/v1/upload/rag/{rag_id}:
+    post:
+      summary: Modify references.
+      parameters:
+        - name: rag_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: References modified successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Modify References"
+        "400":
+          description: Bad request, invalid rag_id or payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid request."
+    put:
+      summary: Change references.
+      parameters:
+        - name: rag_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: References changed successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Change References"
+        "400":
+          description: Bad request, invalid rag_id or payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid request."
+
+  /api/v1/evaluate/rag:
+    get:
+      summary: Show RAG evaluation.
+      responses:
+        "200":
+          description: RAG evaluation retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Show RAG Evaluation"
+
+  /api/v1/evaluate/rag/{rag_id}:
+    post:
+      summary: Transfer RAG output.
+      parameters:
+        - name: rag_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: RAG output transferred successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Transfer RAG Output"
+        "400":
+          description: Bad request, invalid rag_id or payload.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid request."

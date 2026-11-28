@@ -1,0 +1,9 @@
+{
+  "attribution": {
+    "commit": "yagiz erdem",
+    "pr": "yagiz erdem"
+  },
+  "enabledPlugins": {
+    "mongodb@claude-plugins-official": true
+  }
+}
